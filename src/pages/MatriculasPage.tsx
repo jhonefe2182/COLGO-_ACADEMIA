@@ -7,6 +7,8 @@ import { Modal } from '../components/common/Modal'
 import { type Enrollment, type EnrollmentStatus, formatDate } from '../services/mockData'
 import { Eye, Search } from 'lucide-react'
 import { useColgo } from '../state/useColgo'
+// import { v4 as uuidv4 } from 'uuid'
+import { uuidv4 } from '../utils/uuid'
 
 function enrollmentTone(status: EnrollmentStatus): 'success' | 'warning' | 'danger' | 'neutral' | 'accent' {
   if (status === 'Activa') return 'success'
@@ -16,11 +18,21 @@ function enrollmentTone(status: EnrollmentStatus): 'success' | 'warning' | 'dang
 }
 
 export function MatriculasPage() {
-  const { enrollments, actions } = useColgo()
+  const { enrollments, actions, students, courses } = useColgo()
 
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<'Todos' | EnrollmentStatus>('Todos')
   const [selected, setSelected] = useState<Enrollment | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Estado para el formulario de matrícula
+  const [form, setForm] = useState({
+    studentName: '',
+    courseTitle: '',
+    status: 'Activa',
+    startDate: new Date().toISOString().slice(0, 10),
+  })
+  const [formError, setFormError] = useState('')
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -83,8 +95,24 @@ export function MatriculasPage() {
                 <p className="mt-1 text-xs text-[var(--muted)]">Gestión de estados: activa, pendiente y cancelada (mock).</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="secondary">Exportar</Button>
-                <Button variant="primary">Crear matrícula</Button>
+                <Button variant="secondary" onClick={() => {
+                  if (!enrollments.length) return;
+                  const headers = ['Estudiante', 'Curso', 'Estado', 'Inicio', 'Fin']
+                  const rows = enrollments.map(e => [e.studentName, e.courseTitle, e.status, e.startDate, e.endDate || ''])
+                  const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `matriculas_${new Date().toISOString().slice(0,10)}.csv`
+                  document.body.appendChild(a)
+                  a.click()
+                  setTimeout(() => {
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                  }, 100)
+                }}>Exportar</Button>
+                <Button variant="primary" onClick={() => setShowCreateModal(true)}>Crear matrícula</Button>
               </div>
             </div>
 
@@ -221,6 +249,91 @@ export function MatriculasPage() {
             </div>
           </div>
         ) : null}
+      </Modal>
+      {/* Modal crear matrícula */}
+      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear matrícula">
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={e => {
+            e.preventDefault()
+            setFormError('')
+            if (!form.studentName || !form.courseTitle || !form.status || !form.startDate) {
+              setFormError('Todos los campos son obligatorios')
+              return
+            }
+            actions.createEnrollment({
+              id: uuidv4(),
+              studentName: form.studentName,
+              courseTitle: form.courseTitle,
+              status: form.status as EnrollmentStatus,
+              startDate: form.startDate,
+            })
+            setShowCreateModal(false)
+            setForm({
+              studentName: '',
+              courseTitle: '',
+              status: 'Activa',
+              startDate: new Date().toISOString().slice(0, 10),
+            })
+          }}
+        >
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Estudiante</span>
+            <select
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.studentName}
+              onChange={e => setForm(f => ({ ...f, studentName: e.target.value }))}
+              required
+            >
+              <option value="">Selecciona un estudiante</option>
+              {students.map(s => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Curso</span>
+            <select
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.courseTitle}
+              onChange={e => setForm(f => ({ ...f, courseTitle: e.target.value }))}
+              required
+            >
+              <option value="">Selecciona un curso</option>
+              {courses.map(c => (
+                <option key={c.id} value={c.title}>{c.title}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Estado</span>
+            <select
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.status}
+              onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+              required
+            >
+              <option value="Activa">Activa</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Fecha de matrícula</span>
+            <input
+              type="date"
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.startDate}
+              onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+              required
+            />
+          </label>
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" type="button" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button variant="primary" type="submit">Crear matrícula</Button>
+          </div>
+        </form>
       </Modal>
     </div>
   )

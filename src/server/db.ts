@@ -23,12 +23,12 @@ const pool = mysql.createPool({
 });
 
 // Probar conexión
-async function testConnection() {
+async function testConnection(): Promise<boolean> {
   try {
     const connection = await pool.getConnection();
-    const [version] = await connection.query('SELECT VERSION() as version') as [any[], any[]];
+    const [version] = await connection.query('SELECT VERSION() as version') as [Array<{ version: string }>, unknown];
     connection.release();
-    console.log('✅ Conexión MySQL exitosa. Versión:', (version as any[])[0].version);
+    console.log('✅ Conexión MySQL exitosa. Versión:', version[0].version);
     return true;
   } catch (error) {
     console.error('❌ Error de conexión:', (error as Error).message);
@@ -37,9 +37,9 @@ async function testConnection() {
 }
 
 // Funciones de utilidad para queries
-async function query(sql: string, params: any[] = []) {
+async function query<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
   try {
-    const [rows] = await pool.query(sql, params) as [any[], any[]];
+    const [rows] = await pool.query(sql, params) as [T[], unknown];
     return rows;
   } catch (error) {
     console.error('Error en query:', sql, error);
@@ -48,9 +48,9 @@ async function query(sql: string, params: any[] = []) {
 }
 
 // Funciones de utilidad para queries
-async function execute(sql: string, params: any[] = []) {
+async function execute<T = unknown>(sql: string, params?: any): Promise<T> {
   try {
-    const [result] = await pool.execute(sql, params) as [any, any[]];
+    const [result] = await pool.execute(sql, params) as [T, unknown];
     return result;
   } catch (error) {
     console.error('Error en execute:', sql, error);
@@ -68,12 +68,12 @@ export const StudentAPI = {
 
   async getById(id: string) {
     const rows = await query('SELECT * FROM students WHERE id = ?', [id]);
-    return (rows as any[])[0] || null;
+    return rows[0] || null;
   },
 
   async getByDocument(document: string) {
     const rows = await query('SELECT * FROM students WHERE document = ?', [document]);
-    return (rows as any[])[0] || null;
+    return rows[0] || null;
   },
 
   async create(data: {
@@ -137,7 +137,7 @@ export const CourseAPI = {
 
   async getById(id: string) {
     const rows = await query('SELECT * FROM courses WHERE id = ?', [id]);
-    return (rows as any[])[0] || null;
+    return rows[0] || null;
   },
 
   async getByLocation(sedeId: string) {
@@ -189,7 +189,7 @@ export const CourseAPI = {
 
     const params = id ? [id] : [];
     const results = await query(sql, params);
-    return id ? (results as any[])[0] || null : results;
+    return id ? results[0] || null : results;
   },
 };
 
@@ -216,7 +216,7 @@ export const EnrollmentAPI = {
        WHERE e.id = ?`,
       [id]
     );
-    return (rows as any[])[0] || null;
+    return rows[0] || null;
   },
 
   async getByStudent(studentId: string) {
@@ -271,7 +271,7 @@ export const PaymentAPI = {
        WHERE p.id = ?`,
       [id]
     );
-    return (rows as any[])[0] || null;
+    return rows[0] || null;
   },
 
   async getByStudent(studentId: string) {
@@ -325,7 +325,7 @@ export const PaymentAPI = {
         SUM(CASE WHEN status = 'Rechazado' THEN amount ELSE 0 END) as rejected
        FROM payments`
     );
-    return (rows as any[])[0] || { total: 0, approved: 0, pending: 0, rejected: 0 };
+    return rows[0] || { total: 0, approved: 0, pending: 0, rejected: 0 };
   },
 };
 
@@ -358,7 +358,7 @@ export const LocationAPI = {
 
     const params = id ? [id] : [];
     const results = await query(sql, params);
-    return id ? (results as any[])[0] || null : results;
+    return id ? results[0] || null : results;
   },
 };
 

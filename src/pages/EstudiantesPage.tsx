@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Button } from '../components/common/Button'
 import { DataTable, type Column } from '../components/common/Table'
 import { Modal } from '../components/common/Modal'
 import { CreateStudentForm, type CreateStudentFormData } from '../components/students/CreateStudentForm'
-import { type Student, type StudentStatus, formatDate } from '../services/mockData'
-import { StudentService } from '../services/api'
-import { Download, Eye, Plus } from 'lucide-react'
-import { useColgo } from '../state/useColgo'
+import { type Student, type StudentStatus } from '../services/mockData'
+import { StudentService } from '../services/studentSupabase'
+import type { StudentInsert } from '../services/studentSupabase'
+import { Download, Eye, Plus, Trash2, Edit } from 'lucide-react'
 
 function statusTone(status: StudentStatus): 'success' | 'warning' | 'danger' | 'neutral' | 'accent' {
   if (status === 'Activo') return 'success'
@@ -18,75 +18,168 @@ function statusTone(status: StudentStatus): 'success' | 'warning' | 'danger' | '
 }
 
 export function EstudiantesPage() {
-  const { students, actions } = useColgo()
-
+  const [students, setStudents] = useState<Student[]>([])
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<'Todos' | StudentStatus>('Todos')
-  const [sede, setSede] = useState<'Todas' | Student['sede']>('Todas')
+  const [sedeFiltro, setSedeFiltro] = useState<'Todas' | string>('Todas')
+  const [sedes, setSedes] = useState<{ id: string; city: string }[]>([])
+  const [loadingSedes, setLoadingSedes] = useState(true)
+    // Cargar sedes para el filtro
+    useEffect(() => {
+      const fetchSedes = async () => {
+        setLoadingSedes(true)
+        try {
+          const { data, error } = await import('../lib/supabaseClient').then(m => m.supabase.from('sedes').select('id, city').order('city', { ascending: true }))
+          if (error) throw new Error(error.message)
+          setSedes(data || [])
+        } catch (err) {
+          setSedes([
+            { id: 'loc_001', city: 'Medellín' },
+            { id: 'loc_002', city: 'Bogotá' },
+            { id: 'loc_003', city: 'Virtual' },
+          ])
+        } finally {
+          setLoadingSedes(false)
+        }
+      }
+      fetchSedes()
+    }, [])
   const [selected, setSelected] = useState<Student | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [editStudent, setEditStudent] = useState<any>(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  // Cargar estudiantes desde Supabase
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setIsLoading(true)
+      setError(null)
+      setSuccess(null)
+      try {
+        const data = await StudentService.list()
+        setStudents(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al cargar estudiantes')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchStudents()
+  }, [])
+
+  const reloadStudents = async () => {
+    setIsLoading(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const data = await StudentService.list()
+      setStudents(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar estudiantes')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     return students.filter((s) => {
       const matchesQuery = !query || (s.name + ' ' + s.document + ' ' + s.courseTitle).toLowerCase().includes(query)
       const matchesStatus = status === 'Todos' || s.status === status
-      const matchesSede = sede === 'Todas' || s.sede === sede
+      const matchesSede = sedeFiltro === 'Todas' || s.sede === sedeFiltro
       return matchesQuery && matchesStatus && matchesSede
     })
-  }, [q, sede, status, students])
+  }, [q, sedeFiltro, status, students, sedes])
 
   const handleCreateStudent = async (formData: CreateStudentFormData) => {
     setIsCreating(true)
-
+    setError(null)
+    setSuccess(null)
     try {
-      // Generar ID único para el estudiante
-      const studentId = `stu_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`
-
-      // Obtener el ID de la sede según el nombre
-      const sedeMapping: Record<string, string> = {
-        'Medellín': 'sed_001',
-        'Bogotá': 'sed_002',
-        'Virtual': 'sed_003',
-      }
-
-      // Crear el payload para la API
-      const payload = {
-        id: studentId,
+      const payload: StudentInsert = {
         name: formData.name,
         document: formData.document,
+        sede_id: formData.sede_id,
         status: formData.status,
-        sede_id: sedeMapping[formData.sede] || sedeMapping['Medellín'],
-        email: formData.email || undefined,
-        phone: formData.phone || undefined,
+        email: formData.email,
+        phone: formData.phone,
       }
-
-      // Enviar a la API
-      const result = await StudentService.create(payload)
-      console.log('Estudiante creado:', result)
-
-      // Agregar el estudiante al estado local
-      const newStudent: Student = {
-        id: studentId,
-        name: formData.name,
-        document: formData.document,
-        courseTitle: 'Sin asignar',
-        sede: formData.sede,
-        status: formData.status,
-      }
-
-      actions.createStudent(newStudent)
-
-      // Cerrar el modal
+      await StudentService.create(payload)
+      await reloadStudents()
       setShowCreateModal(false)
-
-      // Mostrar mensaje de éxito (opcional - puedes agregar un toast)
-      console.log('Estudiante agregado exitosamente')
-    } catch (error) {
-      console.error('Error al crear estudiante:', error)
+      setSuccess('Estudiante creado correctamente')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear estudiante')
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const handleDeleteStudent = async (id: string) => {
+    if (!window.confirm('¿Seguro que deseas eliminar este estudiante?')) return
+    setError(null)
+    setSuccess(null)
+    try {
+      await StudentService.remove(id)
+      await reloadStudents()
+      setSelected(null)
+      setSuccess('Estudiante eliminado correctamente')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar estudiante')
+    }
+  }
+
+  const handleEditStudent = async (formData: CreateStudentFormData) => {
+    if (!editStudent) return
+    setIsEditing(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      await StudentService.update(editStudent.id, {
+        name: formData.name,
+        document: formData.document,
+        sede_id: formData.sede_id,
+        status: formData.status,
+        email: formData.email,
+        phone: formData.phone,
+      })
+      await reloadStudents()
+      setEditStudent(null)
+      setSuccess('Estudiante editado correctamente')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al editar estudiante')
+    } finally {
+      setIsEditing(false)
+    }
+  }
+
+  // Cuando se pulse editar, buscar datos completos
+  const handleOpenEdit = async (student: Student) => {
+    setEditLoading(true)
+    setError(null)
+    try {
+      // Buscar datos completos en Supabase
+      const { data, error } = await import('../lib/supabaseClient').then(m => m.supabase
+        .from('students')
+        .select('*')
+        .eq('id', student.id)
+        .single())
+      if (error) throw new Error(error.message)
+      setEditStudent({
+        ...student,
+        sede_id: data.sede_id || '',
+        email: data.email || '',
+        phone: data.phone || '',
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar datos para editar')
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -120,9 +213,15 @@ export function EstudiantesPage() {
       header: '',
       className: 'w-[92px]',
       render: (s) => (
-        <div className="flex justify-end">
+        <div className="flex gap-2 justify-end">
           <Button variant="ghost" size="sm" onClick={() => setSelected(s)} leftIcon={<Eye size={16} />}>
             Ver
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(s)} leftIcon={<Edit size={16} />} disabled={editLoading}>
+            Editar
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDeleteStudent(s.id)} leftIcon={<Trash2 size={16} />}>
+            Eliminar
           </Button>
         </div>
       ),
@@ -136,8 +235,33 @@ export function EstudiantesPage() {
     return { active, pending, inactive }
   }, [students])
 
+  // Exportar estudiantes a CSV
+  const handleExport = () => {
+    if (!students.length) return
+    const headers = ['Nombre', 'Documento', 'Curso', 'Sede', 'Estado']
+    const rows = students.map(s => [s.name, s.document, s.courseTitle, s.sede, s.status])
+    const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `estudiantes_${new Date().toISOString().slice(0,10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      {success && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+          <p className="text-sm font-semibold text-green-800 mb-1">Éxito:</p>
+          <p className="text-sm text-green-700 whitespace-pre-wrap">{success}</p>
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-4">
           <Card>
@@ -149,7 +273,7 @@ export function EstudiantesPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="secondary" leftIcon={<Download size={16} />}>
+                <Button variant="secondary" leftIcon={<Download size={16} />} onClick={handleExport}>
                   Exportar
                 </Button>
                 <Button
@@ -188,26 +312,33 @@ export function EstudiantesPage() {
               <label className="block">
                 <span className="mb-2 block text-xs font-semibold text-[var(--muted)]">Sede</span>
                 <select
-                  value={sede}
-                  onChange={(e) => setSede(e.target.value as 'Todas' | Student['sede'])}
+                  value={sedeFiltro}
+                  onChange={(e) => setSedeFiltro(e.target.value)}
                   className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:outline-none"
+                  disabled={loadingSedes}
                 >
                   <option value="Todas">Todas</option>
-                  <option value="Medellín">Medellín</option>
-                  <option value="Bogotá">Bogotá</option>
-                  <option value="Virtual">Virtual</option>
+                  {sedes.map((sede) => (
+                    <option key={sede.id} value={sede.city}>{sede.city}</option>
+                  ))}
                 </select>
               </label>
             </div>
           </Card>
 
           <Card>
-            <DataTable
-              columns={columns}
-              rows={filtered}
-              getRowId={(s) => s.id}
-              emptyState="No se encontraron estudiantes con esos filtros."
-            />
+            {isLoading ? (
+              <div className="p-6 text-center text-sm text-[var(--muted)]">Cargando estudiantes...</div>
+            ) : error ? (
+              <div className="p-6 text-center text-sm text-red-500">{error}</div>
+            ) : (
+              <DataTable
+                columns={columns}
+                rows={filtered}
+                getRowId={(s) => s.id}
+                emptyState="No se encontraron estudiantes con esos filtros."
+              />
+            )}
           </Card>
         </div>
 
@@ -251,7 +382,11 @@ export function EstudiantesPage() {
 
       <Modal
         open={!!selected}
-        onClose={() => setSelected(null)}
+        onClose={() => {
+          setSelected(null)
+          setError(null)
+          setSuccess(null)
+        }}
         title={selected ? `Estudiante · ${selected.name}` : 'Estudiante'}
       >
         {selected ? (
@@ -276,36 +411,21 @@ export function EstudiantesPage() {
             </div>
 
             <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
-              <p className="text-xs font-semibold text-[rgba(255,255,255,0.60)]">Última actualización</p>
-              <p className="mt-1 text-sm text-[rgba(255,255,255,0.88)]">{formatDate('2026-03-14T00:00:00.000Z')}</p>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-xs font-semibold text-[rgba(255,255,255,0.60)]">Cambiar estado</div>
-              <div className="flex flex-wrap gap-2">
-                {(['Activo', 'Pendiente', 'Inactivo'] as StudentStatus[]).map((s) => (
-                  <Button
-                    key={s}
-                    size="sm"
-                    variant={selected.status === s ? 'primary' : 'secondary'}
-                    onClick={() => {
-                      actions.setStudentStatus(selected.id, s)
-                      setSelected((cur) => (cur ? { ...cur, status: s } : cur))
-                    }}
-                  >
-                    {s}
-                  </Button>
-                ))}
-              </div>
+              <p className="text-xs font-semibold text-[rgba(255,255,255,0.60)]">ID</p>
+              <p className="mt-1 text-sm text-[rgba(255,255,255,0.88)]">{selected.id}</p>
             </div>
           </div>
         ) : null}
       </Modal>
 
+      {/* Modal para crear estudiante */}
+
       <Modal
         open={showCreateModal}
         onClose={() => {
           setShowCreateModal(false)
+          setError(null)
+          setSuccess(null)
         }}
         title="Crear Nuevo Estudiante"
         footer={
@@ -314,6 +434,8 @@ export function EstudiantesPage() {
               variant="secondary"
               onClick={() => {
                 setShowCreateModal(false)
+                setError(null)
+                setSuccess(null)
               }}
               disabled={isCreating}
             >
@@ -323,6 +445,42 @@ export function EstudiantesPage() {
         }
       >
         <CreateStudentForm onSubmit={handleCreateStudent} loading={isCreating} />
+        {error && <div className="mt-2 text-sm text-red-500">{error}</div>}
+      </Modal>
+
+      {/* Modal para editar estudiante */}
+      <Modal
+        open={!!editStudent}
+        onClose={() => {
+          setEditStudent(null)
+          setError(null)
+          setSuccess(null)
+        }}
+        title={editStudent ? `Editar Estudiante · ${editStudent.name}` : 'Editar Estudiante'}
+        footer={
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setEditStudent(null)
+                setError(null)
+                setSuccess(null)
+              }}
+              disabled={isEditing}
+            >
+              Cancelar
+            </Button>
+          </div>
+        }
+      >
+        {editStudent && (
+          <CreateStudentForm
+            onSubmit={handleEditStudent}
+            loading={isEditing}
+            initialData={editStudent}
+          />
+        )}
+        {error && <div className="mt-2 text-sm text-red-500">{error}</div>}
       </Modal>
     </div>
   )

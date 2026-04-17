@@ -11,7 +11,7 @@ import type { SearchSuggestion } from '../../services/mockData'
 import { Badge } from '../common/Badge'
 import { cn } from '../../utils/cn'
 import { formatDate } from '../../services/mockData'
-import { useAuth } from '../../state/authContext'
+import { useAuth } from '../../state/useAuth'
 
 type Notification = { id: string; title: string; detail: string; dateISO: string }
 

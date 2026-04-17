@@ -14,6 +14,9 @@ export function CursosPage() {
   const [modality, setModality] = useState<'Todas' | CourseModality>('Todas')
   const [q, setQ] = useState('')
   const [selected, setSelected] = useState<Course | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCatalogModal, setShowCatalogModal] = useState(false)
+  const [showEnrollModal, setShowEnrollModal] = useState<{ open: boolean, course?: Course }>({ open: false })
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -26,6 +29,25 @@ export function CursosPage() {
 
   const openCourse = (course: Course) => setSelected(course)
 
+  // Exportar cursos a CSV
+  const handleExport = () => {
+    if (!courses.length) return
+    const headers = ['Título', 'Modalidad', 'Nivel', 'Duración (semanas)', 'Horas/semana', 'Descripción']
+    const rows = courses.map(c => [c.title, c.modality, c.level, c.durationWeeks, c.weeklyHours, c.description])
+    const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `cursos_${new Date().toISOString().slice(0,10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -35,10 +57,11 @@ export function CursosPage() {
             <p className="mt-1 text-xs text-[var(--muted)]">Vista tipo cards con modalidad presencial/virtual (mock).</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" leftIcon={<BookOpen size={16} />}>
+            <Button variant="secondary" leftIcon={<BookOpen size={16} />} onClick={() => setShowCatalogModal(true)}>
               Ver catálogo
             </Button>
-            <Button variant="primary">Crear curso</Button>
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>Crear curso</Button>
+            <Button variant="secondary" onClick={handleExport}>Exportar</Button>
           </div>
         </div>
 
@@ -136,10 +159,36 @@ export function CursosPage() {
               <Button variant="secondary" onClick={() => setSelected(null)}>
                 Cerrar
               </Button>
-              <Button variant="primary">Inscribirme</Button>
+              <Button variant="primary" onClick={() => setShowEnrollModal({ open: true, course: selected! })}>Inscribirme</Button>
             </div>
           </div>
         ) : null}
+      </Modal>
+      {/* Modal crear curso */}
+      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear curso">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">(Mock) Aquí iría el formulario para crear un curso.</p>
+          <Button variant="primary" onClick={() => setShowCreateModal(false)}>Cerrar</Button>
+        </div>
+      </Modal>
+
+      {/* Modal catálogo */}
+      <Modal open={showCatalogModal} onClose={() => setShowCatalogModal(false)} title="Catálogo de cursos">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">(Mock) Aquí se mostraría el catálogo completo de cursos.</p>
+          <Button variant="primary" onClick={() => setShowCatalogModal(false)}>Cerrar</Button>
+        </div>
+      </Modal>
+
+      {/* Modal inscripción */}
+      <Modal open={showEnrollModal.open} onClose={() => setShowEnrollModal({ open: false })} title="Inscribirse al curso">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">¿Deseas inscribirte en el curso <b>{showEnrollModal.course?.title}</b>?</p>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setShowEnrollModal({ open: false })}>Cancelar</Button>
+            <Button variant="primary" onClick={() => setShowEnrollModal({ open: false })}>Confirmar</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

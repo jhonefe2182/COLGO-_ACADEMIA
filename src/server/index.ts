@@ -44,7 +44,7 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/db-test', async (_req, res) => {
   try {
     res.json({ status: 'connected', database: 'colgo_db' })
-  } catch (error) {
+  } catch {
     res.status(500).json({ status: 'disconnected', error: 'Cannot connect to database' })
   }
 })

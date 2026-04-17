@@ -21,6 +21,7 @@ type Action =
   | { type: 'STUDENT/CREATE'; payload: { student: Student } }
   | { type: 'PAYMENT/SET_STATUS'; payload: { paymentId: string; status: PaymentStatus } }
   | { type: 'ENROLLMENT/SET_STATUS'; payload: { enrollmentId: string; status: EnrollmentStatus } }
+  | { type: 'ENROLLMENT/CREATE'; payload: { enrollment: Enrollment } }
   | { type: 'ACTIVITY/PUSH'; payload: { activity: RecentActivity } }
 
 function uid(prefix: string) {

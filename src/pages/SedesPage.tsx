@@ -11,6 +11,8 @@ import { useColgo } from '../state/useColgo'
 export function SedesPage() {
   const { locations } = useColgo()
   const [selected, setSelected] = useState<Location | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showMapModal, setShowMapModal] = useState(false)
 
   const totals = useMemo(() => {
     const activeCourses = locations.reduce((acc, l) => acc + l.activeCourses, 0)
@@ -27,10 +29,27 @@ export function SedesPage() {
             <p className="mt-1 text-xs text-[var(--muted)]">Cards para Medellín, Bogotá y Virtual (mock).</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" leftIcon={<MapPinned size={16} />}>
+            <Button variant="secondary" leftIcon={<MapPinned size={16} />} onClick={() => setShowMapModal(true)}>
               Ver mapa
             </Button>
-            <Button variant="primary">Nueva sede</Button>
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>Nueva sede</Button>
+            <Button variant="secondary" onClick={() => {
+              if (!locations.length) return;
+              const headers = ['Ciudad', 'Dirección', 'Teléfono', 'Cursos activos', 'Estudiantes']
+              const rows = locations.map(l => [l.city, l.address, l.phone, l.activeCourses, l.students])
+              const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `sedes_${new Date().toISOString().slice(0,10)}.csv`
+              document.body.appendChild(a)
+              a.click()
+              setTimeout(() => {
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+              }, 100)
+            }}>Exportar</Button>
           </div>
         </div>
 
@@ -116,6 +135,21 @@ export function SedesPage() {
             </div>
           </div>
         ) : null}
+      </Modal>
+      {/* Modal crear sede */}
+      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear sede">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">(Mock) Aquí iría el formulario para crear una sede.</p>
+          <Button variant="primary" onClick={() => setShowCreateModal(false)}>Cerrar</Button>
+        </div>
+      </Modal>
+
+      {/* Modal ver mapa */}
+      <Modal open={showMapModal} onClose={() => setShowMapModal(false)} title="Mapa de sedes">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">(Mock) Aquí se mostraría el mapa de sedes.</p>
+          <Button variant="primary" onClick={() => setShowMapModal(false)}>Cerrar</Button>
+        </div>
       </Modal>
     </div>
   )

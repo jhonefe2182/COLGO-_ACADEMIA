@@ -1,7 +1,7 @@
 // Servicio para comunicación con la API de Backend
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
-console.log('🔌 API Base URL:', API_BASE)
+// console.log('🔌 API Base URL:', API_BASE) // Solo para debug
 
 export class ApiError extends Error {
   public status: number;
@@ -19,7 +19,7 @@ async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`
 
-  console.log(`📤 ${options.method || 'GET'} ${url}`)
+  // console.log(`📤 ${options.method || 'GET'} ${url}`) // Solo para debug
 
   try {
     const response = await fetch(url, {
@@ -36,16 +36,16 @@ async function apiRequest<T>(
     }
 
     const data = await response.json()
-    console.log(`✅ Respuesta exitosa:`, data)
+    // console.log(`✅ Respuesta exitosa:`, data) // Solo para debug
     return data
   } catch (error) {
     if (error instanceof ApiError) {
-      console.error(`❌ ApiError: ${error.message}`)
+      // console.error(`❌ ApiError: ${error.message}`) // Solo para debug
       throw error
     }
 
     const message = error instanceof Error ? error.message : 'Error desconocido'
-    console.error(`❌ Error de conexión: ${message}`)
+    // console.error(`❌ Error de conexión: ${message}`) // Solo para debug
 
     if (message.includes('Failed to fetch') || message.includes('fetch')) {
       throw new ApiError(
@@ -93,16 +93,10 @@ export const StudentService = {
   },
 
   async create(data: CreateStudentPayload): Promise<{ message: string; id: string }> {
-    // Si la API no está disponible, usar el método local
-    try {
-      return await apiRequest('/students', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      })
-    } catch (error) {
-      // Si hay error de conexión, retornar error
-      throw error
-    }
+    return apiRequest('/students', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   },
 
   async updateStatus(
@@ -139,7 +133,7 @@ export const EnrollmentService = {
     return apiRequest(`/students/${studentId}/enrollments`)
   },
 
-  async create(data: any) {
+  async create(data: { id: string; student_id: string; course_id: string; start_date: string; status: 'Activa' | 'Pendiente' | 'Cancelada' }) {
     return apiRequest('/enrollments', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -156,7 +150,7 @@ export const PaymentService = {
     return apiRequest('/payments')
   },
 
-  async create(data: any) {
+  async create(data: { id: string; student_id: string; course_id: string; enrollment_id?: string; amount: number; payment_date: string; status: 'Pendiente' | 'Aprobado' | 'Rechazado'; payment_method?: string; notes?: string }) {
     return apiRequest('/payments', {
       method: 'POST',
       body: JSON.stringify(data),

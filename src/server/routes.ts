@@ -18,8 +18,9 @@ import {
 const router = express.Router();
 
 // Función auxiliar para manejo de errores
-const asyncHandler = (fn: Function) => (req: Request, res: Response, next: Function) => {
-  Promise.resolve(fn(req, res, next)).catch((err) => next(err));
+type AsyncHandler = (req: Request, res: Response, next: () => void) => Promise<void>;
+const asyncHandler = (fn: AsyncHandler) => (req: Request, res: Response, next: () => void) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 // ============================================================================
@@ -36,7 +37,8 @@ router.get('/students', asyncHandler(async (_req: Request, res: Response) => {
 router.get('/students/:id', asyncHandler(async (req: Request, res: Response) => {
   const student = await StudentAPI.getWithDetails(req.params.id);
   if (!student) {
-    return res.status(404).json({ error: 'Estudiante no encontrado' });
+    res.status(404).json({ error: 'Estudiante no encontrado' });
+    return;
   }
   res.json(student);
 }));
@@ -47,7 +49,8 @@ router.post('/students', asyncHandler(async (req: Request, res: Response) => {
 
   // Validación básica
   if (!id || !name || !document) {
-    return res.status(400).json({ error: 'Campos requeridos: id, name, document' });
+    res.status(400).json({ error: 'Campos requeridos: id, name, document' });
+    return;
   }
 
   await StudentAPI.create({ id, name, document, status, sede_id, email, phone });
@@ -59,7 +62,8 @@ router.put('/students/:id/status', asyncHandler(async (req: Request, res: Respon
   const { status } = req.body;
 
   if (!status || !['Activo', 'Pendiente', 'Inactivo'].includes(status)) {
-    return res.status(400).json({ error: 'Estado inválido' });
+    res.status(400).json({ error: 'Estado inválido' });
+    return;
   }
 
   await StudentAPI.updateStatus(req.params.id, status);
@@ -92,7 +96,8 @@ router.get('/courses/stats', asyncHandler(async (_req: Request, res: Response) =
 router.get('/courses/:id', asyncHandler(async (req: Request, res: Response) => {
   const course = await CourseAPI.getWithStats(req.params.id);
   if (!course) {
-    return res.status(404).json({ error: 'Curso no encontrado' });
+    res.status(404).json({ error: 'Curso no encontrado' });
+    return;
   }
   res.json(course);
 }));
@@ -102,7 +107,8 @@ router.post('/courses', asyncHandler(async (req: Request, res: Response) => {
   const { id, title, modality, level, duration_weeks, weekly_hours, description, color } = req.body;
 
   if (!id || !title || !modality || !level || !duration_weeks || weekly_hours === undefined) {
-    return res.status(400).json({ error: 'Campos requeridos incompletos' });
+    res.status(400).json({ error: 'Campos requeridos incompletos' });
+    return;
   }
 
   await CourseAPI.create({ id, title, modality, level, duration_weeks, weekly_hours, description, color });
@@ -129,7 +135,8 @@ router.get('/enrollments', asyncHandler(async (_req: Request, res: Response) => 
 router.get('/enrollments/:id', asyncHandler(async (req: Request, res: Response) => {
   const enrollment = await EnrollmentAPI.getById(req.params.id);
   if (!enrollment) {
-    return res.status(404).json({ error: 'Matrícula no encontrada' });
+    res.status(404).json({ error: 'Matrícula no encontrada' });
+    return;
   }
   res.json(enrollment);
 }));
@@ -139,7 +146,8 @@ router.post('/enrollments', asyncHandler(async (req: Request, res: Response) => 
   const { id, student_id, course_id, start_date, status } = req.body;
 
   if (!id || !student_id || !course_id || !start_date) {
-    return res.status(400).json({ error: 'Campos requeridos: id, student_id, course_id, start_date' });
+    res.status(400).json({ error: 'Campos requeridos: id, student_id, course_id, start_date' });
+    return;
   }
 
   await EnrollmentAPI.create({ id, student_id, course_id, start_date, status: status || 'Pendiente' });
@@ -151,7 +159,8 @@ router.put('/enrollments/:id/status', asyncHandler(async (req: Request, res: Res
   const { status } = req.body;
 
   if (!status || !['Activa', 'Pendiente', 'Cancelada'].includes(status)) {
-    return res.status(400).json({ error: 'Estado inválido' });
+    res.status(400).json({ error: 'Estado inválido' });
+    return;
   }
 
   await EnrollmentAPI.updateStatus(req.params.id, status);
@@ -184,7 +193,8 @@ router.get('/payments/revenue', asyncHandler(async (_req: Request, res: Response
 router.get('/payments/:id', asyncHandler(async (req: Request, res: Response) => {
   const payment = await PaymentAPI.getById(req.params.id);
   if (!payment) {
-    return res.status(404).json({ error: 'Pago no encontrado' });
+    res.status(404).json({ error: 'Pago no encontrado' });
+    return;
   }
   res.json(payment);
 }));
@@ -194,7 +204,8 @@ router.post('/payments', asyncHandler(async (req: Request, res: Response) => {
   const { id, student_id, course_id, enrollment_id, amount, payment_date, status, payment_method, notes } = req.body;
 
   if (!id || !student_id || !course_id || !amount || !payment_date) {
-    return res.status(400).json({ error: 'Campos requeridos incompletos' });
+    res.status(400).json({ error: 'Campos requeridos incompletos' });
+    return;
   }
 
   await PaymentAPI.create({
@@ -216,7 +227,8 @@ router.put('/payments/:id/status', asyncHandler(async (req: Request, res: Respon
   const { status } = req.body;
 
   if (!status || !['Pendiente', 'Aprobado', 'Rechazado'].includes(status)) {
-    return res.status(400).json({ error: 'Estado inválido' });
+    res.status(400).json({ error: 'Estado inválido' });
+    return;
   }
 
   await PaymentAPI.updateStatus(req.params.id, status);
@@ -249,7 +261,8 @@ router.get('/locations/stats', asyncHandler(async (_req: Request, res: Response)
 router.get('/locations/:id', asyncHandler(async (req: Request, res: Response) => {
   const location = await LocationAPI.getStats(req.params.id);
   if (!location) {
-    return res.status(404).json({ error: 'Sede no encontrada' });
+    res.status(404).json({ error: 'Sede no encontrada' });
+    return;
   }
   res.json(location);
 }));
@@ -269,8 +282,8 @@ router.get('/activity', asyncHandler(async (req: Request, res: Response) => {
 // MANEJO DE ERRORES
 // ============================================================================
 
-router.use((err: any, _req: Request, res: Response, _next: Function) => {
-  console.error('Error:', err);
+router.use((err: Error, _req: Request, res: Response) => {
+  // console.error('Error:', err); // Comentado para producción
   res.status(500).json({
     error: 'Error interno del servidor',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined,

@@ -21,6 +21,8 @@ export function PagosPage() {
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<'Todos' | PaymentStatus>('Todos')
   const [selected, setSelected] = useState<Payment | null>(null)
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const [showSyncModal, setShowSyncModal] = useState(false)
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -88,10 +90,27 @@ export function PagosPage() {
                 <p className="mt-1 text-xs text-[var(--muted)]">Tabla con estados: pendiente, aprobado y rechazado (mock).</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="secondary" leftIcon={<RefreshCcw size={16} />}>
+                <Button variant="secondary" leftIcon={<RefreshCcw size={16} />} onClick={() => setShowSyncModal(true)}>
                   Sincronizar
                 </Button>
-                <Button variant="primary">Registrar pago</Button>
+                <Button variant="primary" onClick={() => setShowRegisterModal(true)}>Registrar pago</Button>
+                <Button variant="secondary" onClick={() => {
+                  if (!payments.length) return;
+                  const headers = ['Estudiante', 'Curso', 'Valor', 'Estado', 'Fecha']
+                  const rows = payments.map(p => [p.studentName, p.courseTitle, p.amount, p.status, p.paymentDate])
+                  const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `pagos_${new Date().toISOString().slice(0,10)}.csv`
+                  document.body.appendChild(a)
+                  a.click()
+                  setTimeout(() => {
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                  }, 100)
+                }}>Exportar</Button>
               </div>
             </div>
 
@@ -257,6 +276,21 @@ export function PagosPage() {
             </div>
           </div>
         ) : null}
+      </Modal>
+      {/* Modal registrar pago */}
+      <Modal open={showRegisterModal} onClose={() => setShowRegisterModal(false)} title="Registrar pago">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">(Mock) Aquí iría el formulario para registrar un pago.</p>
+          <Button variant="primary" onClick={() => setShowRegisterModal(false)}>Cerrar</Button>
+        </div>
+      </Modal>
+
+      {/* Modal sincronizar */}
+      <Modal open={showSyncModal} onClose={() => setShowSyncModal(false)} title="Sincronizar pagos">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm">(Mock) Aquí se mostraría el estado de la sincronización con el backend.</p>
+          <Button variant="primary" onClick={() => setShowSyncModal(false)}>Cerrar</Button>
+        </div>
       </Modal>
     </div>
   )

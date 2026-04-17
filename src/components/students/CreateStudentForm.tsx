@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '../common/Button'
 import type { StudentStatus } from '../../services/mockData'
 
 export interface CreateStudentFormData {
   name: string
   document: string
-  sede: 'Medellín' | 'Bogotá' | 'Virtual'
+  sede_id: string
   status: StudentStatus
   email?: string
   phone?: string
@@ -14,15 +14,43 @@ export interface CreateStudentFormData {
 export function CreateStudentForm({
   onSubmit,
   loading = false,
+  initialData,
 }: {
   onSubmit: (data: CreateStudentFormData) => Promise<void>
   loading?: boolean
+  initialData?: Partial<CreateStudentFormData>
 }) {
+    // Estado para sedes
+    const [sedes, setSedes] = useState<{ id: string; city: string }[]>([])
+    const [loadingSedes, setLoadingSedes] = useState(true)
+
+    useEffect(() => {
+      const fetchSedes = async () => {
+        setLoadingSedes(true)
+        try {
+          // Usar Supabase directamente para obtener sedes
+          const { data, error } = await import('../../lib/supabaseClient').then(m => m.supabase.from('sedes').select('id, city').order('city', { ascending: true }))
+          if (error) throw new Error(error.message)
+          setSedes(data || [])
+        } catch (err) {
+          setSedes([
+            { id: 'loc_001', city: 'Medellín' },
+            { id: 'loc_002', city: 'Bogotá' },
+            { id: 'loc_003', city: 'Virtual' },
+          ])
+        } finally {
+          setLoadingSedes(false)
+        }
+      }
+      fetchSedes()
+    }, [])
   const [formData, setFormData] = useState<CreateStudentFormData>({
-    name: '',
-    document: '',
-    sede: 'Medellín',
-    status: 'Pendiente',
+    name: initialData?.name || '',
+    document: initialData?.document || '',
+    sede_id: initialData?.sede_id || '',
+    status: initialData?.status || 'Pendiente',
+    email: initialData?.email || '',
+    phone: initialData?.phone || '',
   })
 
   const [error, setError] = useState<string | null>(null)
@@ -31,13 +59,21 @@ export function CreateStudentForm({
     e.preventDefault()
     setError(null)
 
-    // Validación simple
+    // Validación avanzada
     if (!formData.name.trim()) {
       setError('El nombre es requerido')
       return
     }
     if (!formData.document.trim()) {
       setError('El documento es requerido')
+      return
+    }
+    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      setError('El correo electrónico no es válido')
+      return
+    }
+    if (formData.phone && !/^\+?\d{7,15}$/.test(formData.phone)) {
+      setError('El teléfono debe tener entre 7 y 15 dígitos y solo números')
       return
     }
 
@@ -85,20 +121,18 @@ export function CreateStudentForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-xs font-semibold text-[var(--muted)]">Sede</span>
+          <span className="mb-2 block text-xs font-semibold text-[var(--muted)]">Sede *</span>
           <select
-            value={formData.sede}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                sede: e.target.value as 'Medellín' | 'Bogotá' | 'Virtual',
-              })
-            }
+            value={formData.sede_id}
+            onChange={(e) => setFormData({ ...formData, sede_id: e.target.value })}
             className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] focus:border-[var(--accent)] focus:bg-[var(--panel-2)] focus:outline-none"
+            required
+            disabled={loadingSedes}
           >
-            <option value="Medellín">Medellín</option>
-            <option value="Bogotá">Bogotá</option>
-            <option value="Virtual">Virtual</option>
+            <option value="">{loadingSedes ? 'Cargando sedes...' : 'Seleccione una sede'}</option>
+            {sedes.map((sede) => (
+              <option key={sede.id} value={sede.id}>{sede.city}</option>
+            ))}
           </select>
         </label>
 

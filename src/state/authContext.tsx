@@ -1,21 +1,11 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 
-type AuthContextType = {
-  authenticated: boolean
-  login: (username: string, password: string) => boolean
-  logout: () => void
-}
 
-const AuthContext = createContext<AuthContextType | null>(null)
+import { useMemo, useState, type ReactNode } from 'react'
+import { isAuthenticated, clearAuth } from './authUtils'
+import { AuthContext } from './authContextProvider'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authenticated, setAuthenticated] = useState(() => {
-    try {
-      return window.localStorage.getItem('colgo-authenticated') === 'true'
-    } catch {
-      return false
-    }
-  })
+  const [authenticated, setAuthenticated] = useState(isAuthenticated())
 
   const login = (username: string, password: string) => {
     const cleanedUsername = username.trim().toUpperCase()
@@ -28,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
-    window.localStorage.removeItem('colgo-authenticated')
+    clearAuth()
     setAuthenticated(false)
   }
 
@@ -40,8 +30,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider')
-  return context
-}
+
