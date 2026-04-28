@@ -14,6 +14,8 @@ export type DataTableProps<T extends object> = {
   getRowId: (row: T) => string
   emptyState?: ReactNode
   className?: string
+  /** Abre detalle / panel al hacer clic en la fila (usa stopPropagation en botones dentro de celdas). */
+  onRowClick?: (row: T) => void
 }
 
 export function DataTable<T extends object>({
@@ -22,6 +24,7 @@ export function DataTable<T extends object>({
   getRowId,
   emptyState = 'No hay resultados.',
   className,
+  onRowClick,
 }: DataTableProps<T>) {
   return (
     <div className={cn('overflow-x-auto', className)}>
@@ -52,7 +55,17 @@ export function DataTable<T extends object>({
             </tr>
           ) : (
             rows.map((row, index) => (
-              <tr key={getRowId(row)} className={`${index % 2 !== 0 ? 'bg-gray-100' : ''} hover:bg-yellow-50 border-b border-gray-200`}>
+              <tr
+                key={getRowId(row)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={cn(
+                  'border-b border-gray-200 transition-colors',
+                  index % 2 !== 0 ? 'bg-gray-100' : '',
+                  onRowClick
+                    ? 'cursor-pointer hover:bg-amber-50/90 active:bg-amber-100/80'
+                    : 'hover:bg-yellow-50',
+                )}
+              >
                 {columns.map((col) => (
                   <td key={col.header} className={cn('px-4 py-3 text-sm', col.className)}>
                     {col.render(row)}

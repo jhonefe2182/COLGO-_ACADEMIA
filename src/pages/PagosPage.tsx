@@ -7,6 +7,7 @@ import { Modal } from '../components/common/Modal'
 import { type Payment, type PaymentStatus, formatDate, formatCOP } from '../services/mockData'
 import { Eye, RefreshCcw, Search } from 'lucide-react'
 import { useColgo } from '../state/useColgo'
+import { saveBlobAs } from '../utils/saveFileAs'
 
 function paymentTone(status: PaymentStatus): 'success' | 'warning' | 'danger' | 'neutral' | 'accent' {
   if (status === 'Aprobado') return 'success'
@@ -94,23 +95,32 @@ export function PagosPage() {
                   Sincronizar
                 </Button>
                 <Button variant="primary" onClick={() => setShowRegisterModal(true)}>Registrar pago</Button>
-                <Button variant="secondary" onClick={() => {
-                  if (!payments.length) return;
-                  const headers = ['Estudiante', 'Curso', 'Valor', 'Estado', 'Fecha']
-                  const rows = payments.map(p => [p.studentName, p.courseTitle, p.amount, p.status, p.paymentDate])
-                  const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
-                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = `pagos_${new Date().toISOString().slice(0,10)}.csv`
-                  document.body.appendChild(a)
-                  a.click()
-                  setTimeout(() => {
-                    document.body.removeChild(a)
-                    URL.revokeObjectURL(url)
-                  }, 100)
-                }}>Exportar</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void (async () => {
+                      if (!payments.length) return
+                      const headers = ['Estudiante', 'Curso', 'Valor', 'Estado', 'Fecha']
+                      const rows = payments.map((p) => [
+                        p.studentName,
+                        p.courseTitle,
+                        p.amount,
+                        p.status,
+                        p.paymentDate,
+                      ])
+                      const csvContent = [headers, ...rows]
+                        .map((r) => r.map((x) => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(','))
+                        .join('\n')
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                      await saveBlobAs(blob, {
+                        suggestedName: `pagos_${new Date().toISOString().slice(0, 10)}.csv`,
+                        typeDescription: 'Pagos (CSV)',
+                      })
+                    })()
+                  }}
+                >
+                  Exportar
+                </Button>
               </div>
             </div>
 

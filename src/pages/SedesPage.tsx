@@ -7,12 +7,25 @@ import { Modal } from '../components/common/Modal'
 import { type Location } from '../services/mockData'
 import { Building2, MapPinned, Users } from 'lucide-react'
 import { useColgo } from '../state/useColgo'
+import { uuidv4 } from '../utils/uuid'
+import { Toast } from '../components/common/Toast'
+import { saveBlobAs } from '../utils/saveFileAs'
 
 export function SedesPage() {
-  const { locations } = useColgo()
+  const { locations, actions } = useColgo()
   const [selected, setSelected] = useState<Location | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showMapModal, setShowMapModal] = useState(false)
+  const [form, setForm] = useState({
+    city: '',
+    address: '',
+    phone: '',
+    activeCourses: 0,
+    students: 0,
+    color: '#fbbf24',
+  })
+  const [formError, setFormError] = useState('')
+  const [showToast, setShowToast] = useState(false)
 
   const totals = useMemo(() => {
     const activeCourses = locations.reduce((acc, l) => acc + l.activeCourses, 0)
@@ -22,6 +35,7 @@ export function SedesPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <Toast message="Descarga completada" show={showToast} onClose={() => setShowToast(false)} />
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -33,23 +47,27 @@ export function SedesPage() {
               Ver mapa
             </Button>
             <Button variant="primary" onClick={() => setShowCreateModal(true)}>Nueva sede</Button>
-            <Button variant="secondary" onClick={() => {
-              if (!locations.length) return;
-              const headers = ['Ciudad', 'Dirección', 'Teléfono', 'Cursos activos', 'Estudiantes']
-              const rows = locations.map(l => [l.city, l.address, l.phone, l.activeCourses, l.students])
-              const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
-              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = `sedes_${new Date().toISOString().slice(0,10)}.csv`
-              document.body.appendChild(a)
-              a.click()
-              setTimeout(() => {
-                document.body.removeChild(a)
-                URL.revokeObjectURL(url)
-              }, 100)
-            }}>Exportar</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void (async () => {
+                  if (!locations.length) return
+                  const headers = ['Ciudad', 'Dirección', 'Teléfono', 'Cursos activos', 'Estudiantes']
+                  const rows = locations.map((l) => [l.city, l.address, l.phone, l.activeCourses, l.students])
+                  const csvContent = [headers, ...rows]
+                    .map((r) => r.map((x) => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(','))
+                    .join('\n')
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                  const result = await saveBlobAs(blob, {
+                    suggestedName: `sedes_${new Date().toISOString().slice(0, 10)}.csv`,
+                    typeDescription: 'Sedes (CSV)',
+                  })
+                  if (result !== 'cancelled') setShowToast(true)
+                })()
+              }}
+            >
+              Exportar
+            </Button>
           </div>
         </div>
 
@@ -138,10 +156,88 @@ export function SedesPage() {
       </Modal>
       {/* Modal crear sede */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear sede">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm">(Mock) Aquí iría el formulario para crear una sede.</p>
-          <Button variant="primary" onClick={() => setShowCreateModal(false)}>Cerrar</Button>
-        </div>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={e => {
+            e.preventDefault()
+            setFormError('')
+            if (!form.city || !form.address || !form.phone) {
+              setFormError('Todos los campos son obligatorios')
+              return
+            }
+            actions.createLocation({
+              id: uuidv4(),
+              city: form.city as 'Medellín' | 'Bogotá' | 'Virtual',
+              address: form.address,
+              phone: form.phone,
+              activeCourses: Number(form.activeCourses),
+              students: Number(form.students),
+              color: form.color,
+            })
+            setShowCreateModal(false)
+            setForm({ city: '', address: '', phone: '', activeCourses: 0, students: 0, color: '#fbbf24' })
+          }}
+        >
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Ciudad</span>
+            <select
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.city}
+              onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+              required
+            >
+              <option value="">Selecciona una ciudad</option>
+              <option value="Medellín">Medellín</option>
+              <option value="Bogotá">Bogotá</option>
+              <option value="Virtual">Virtual</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Dirección</span>
+            <input
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.address}
+              onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Teléfono</span>
+            <input
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.phone}
+              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Cursos activos</span>
+            <input
+              type="number"
+              min="0"
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.activeCourses}
+              onChange={e => setForm((f) => ({ ...f, activeCourses: Number(e.target.value) }))}
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--muted)]">Estudiantes</span>
+            <input
+              type="number"
+              min="0"
+              className="h-10 rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
+              value={form.students}
+              onChange={e => setForm((f) => ({ ...f, students: Number(e.target.value) }))}
+              required
+            />
+          </label>
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" type="button" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+            <Button variant="primary" type="submit">Crear sede</Button>
+          </div>
+        </form>
       </Modal>
 
       {/* Modal ver mapa */}

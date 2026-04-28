@@ -59,4 +59,20 @@
   .shadow-soft {
     box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
   }
+
+  .compact-ui .rounded-xl {
+    border-radius: 0.65rem;
+  }
+
+  .compact-ui .rounded-2xl {
+    border-radius: 0.9rem;
+  }
+
+  .compact-ui .h-10 {
+    height: 2.25rem;
+  }
+
+  .compact-ui .h-12 {
+    height: 2.6rem;
+  }
 }

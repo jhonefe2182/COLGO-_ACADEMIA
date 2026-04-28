@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { Sidebar } from '../components/layout/Sidebar'
+import { Sidebar, getNavItems } from '../components/layout/Sidebar'
 import { Header } from '../components/layout/Header'
 import { getSearchSuggestionsFromData } from '../services/mockData'
 import { useColgo } from '../state/useColgo'
+import { loadSessionUser } from '../state/authSession'
 
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -16,24 +17,14 @@ export default function DashboardLayout() {
     [students, courses, payments, locations],
   )
 
+  const rol = loadSessionUser()?.rol
+  const cambiarPasswordPendiente = Boolean(loadSessionUser()?.cambiar_password)
+  const navItems = useMemo(() => getNavItems(rol), [rol])
+
   const activePageLabel = useMemo(() => {
-    switch (location.pathname) {
-      case '/dashboard':
-        return 'Panel'
-      case '/estudiantes':
-        return 'Estudiantes'
-      case '/cursos':
-        return 'Cursos'
-      case '/pagos':
-        return 'Pagos'
-      case '/matriculas':
-        return 'Matrículas'
-      case '/sedes':
-        return 'Sedes'
-      default:
-        return 'Panel'
-    }
-  }, [location.pathname])
+    const active = navItems.find((item) => location.pathname.startsWith(item.to))
+    return active?.label ?? 'Panel'
+  }, [location.pathname, navItems])
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -46,6 +37,11 @@ export default function DashboardLayout() {
         />
 
         <main className="px-4 pb-6 pt-4 lg:px-6 lg:pb-8">
+          {cambiarPasswordPendiente ? (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Recomendación de seguridad: actualiza tu contraseña inicial desde tu perfil/configuración.
+            </div>
+          ) : null}
           <Outlet />
         </main>
       </div>

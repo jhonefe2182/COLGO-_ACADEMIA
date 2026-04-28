@@ -1,51 +1,322 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { Button } from '../components/common/Button'
 import { Modal } from '../components/common/Modal'
-import { CourseCard } from '../components/courses/CourseCard'
-import { type Course, type CourseModality } from '../services/mockData'
-import { BookOpen, GraduationCap, Search } from 'lucide-react'
-import { useColgo } from '../state/useColgo'
+import { Toast } from '../components/common/Toast'
+import {
+  asignarDocenteCurso,
+  createAdminPrograma,
+  createCursoModulo,
+  getAdminCursos,
+  getAdminDocentes,
+  getAdminEstudiantes,
+  getAdminProgramas,
+  inscribirEstudiantesCurso,
+} from '../services/apiClient'
+import { Search } from 'lucide-react'
+import { saveBlobAs } from '../utils/saveFileAs'
+import { withOptimisticUpdate } from '../utils/optimistic'
 
 export function CursosPage() {
-  const { courses } = useColgo()
-
-  const [modality, setModality] = useState<'Todas' | CourseModality>('Todas')
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
-  const [selected, setSelected] = useState<Course | null>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showCatalogModal, setShowCatalogModal] = useState(false)
-  const [showEnrollModal, setShowEnrollModal] = useState<{ open: boolean, course?: Course }>({ open: false })
+  const [programaFiltro, setProgramaFiltro] = useState<number | 'todos'>('todos')
+  const [cursos, setCursos] = useState<Array<{
+    id: number
+    nombre: string
+    codigo?: string
+    descripcion?: string
+    docente?: string
+    programa?: string
+    programa_id?: number | null
+    capacidad?: number
+    estudiantes_inscritos?: number
+  }>>([])
+  const [docentes, setDocentes] = useState<Array<{ id: number; nombre: string; apellido: string; email: string }>>([])
+  const [estudiantes, setEstudiantes] = useState<Array<{ id: number; nombre: string; apellido: string; email: string }>>([])
+  const [programas, setProgramas] = useState<Array<{ id: number; nombre: string; codigo: string; activo?: boolean }>>([])
+  const [modulosRecientes, setModulosRecientes] = useState<Record<number, Array<{ titulo: string; orden: number }>>>({})
+
+  const [selectedCursoId, setSelectedCursoId] = useState<number | null>(null)
+  const [showProgramaModal, setShowProgramaModal] = useState(false)
+  const [showModuloModal, setShowModuloModal] = useState(false)
+  const [showAsignarModal, setShowAsignarModal] = useState(false)
+  const [showInscribirModal, setShowInscribirModal] = useState(false)
+  const [toast, setToast] = useState('')
+
+  const [programaForm, setProgramaForm] = useState({ nombre: '', codigo: '', descripcion: '' })
+  const [moduloForm, setModuloForm] = useState({ titulo: '', descripcion: '', orden: 1 })
+  const [docenteId, setDocenteId] = useState<number | null>(null)
+  const [estudianteIds, setEstudianteIds] = useState<number[]>([])
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
-    return courses.filter((c) => {
-      const matchesModality = modality === 'Todas' || c.modality === modality
-      const matchesQuery = !query || (c.title + ' ' + c.description + ' ' + c.level).toLowerCase().includes(query)
-      return matchesModality && matchesQuery
+    return cursos.filter((c) => {
+      const matchesQuery = !query || `${c.nombre} ${c.codigo || ''} ${c.descripcion || ''}`.toLowerCase().includes(query)
+      const matchesPrograma = programaFiltro === 'todos' || Number(c.programa_id || 0) === programaFiltro
+      return matchesQuery && matchesPrograma
     })
-  }, [courses, modality, q])
+  }, [cursos, q, programaFiltro])
 
-  const openCourse = (course: Course) => setSelected(course)
+  const metricas = useMemo(() => {
+    const totalCursos = filtered.length
+    const conDocente = filtered.filter((c) => Boolean(c.docente)).length
+    const ocupacion = filtered.reduce((acc, c) => {
+      const capacidad = Number(c.capacidad || 0)
+      const inscritos = Number(c.estudiantes_inscritos || 0)
+      if (!capacidad) return acc
+      return acc + Math.min(100, Math.round((inscritos / capacidad) * 100))
+    }, 0)
+    const ocupacionPromedio = totalCursos > 0 ? Math.round(ocupacion / totalCursos) : 0
+    const programasActivos = programas.filter((p) => p.activo !== false).length
+    return {
+      totalCursos,
+      conDocente,
+      sinDocente: Math.max(0, totalCursos - conDocente),
+      ocupacionPromedio,
+      programasActivos,
+    }
+  }, [filtered, programas])
 
-  // Exportar cursos a CSV
+  const alertas = useMemo(() => {
+    const items: Array<{
+      id: string
+      prioridad: 'alta' | 'media' | 'baja'
+      titulo: string
+      detalle: string
+      cursoId: number
+      accion: 'asignar_docente' | 'inscribir_estudiantes'
+    }> = []
+
+    for (const c of filtered) {
+      const capacidad = Number(c.capacidad || 0)
+      const inscritos = Number(c.estudiantes_inscritos || 0)
+      const ocupacion = capacidad > 0 ? Math.round((inscritos / capacidad) * 100) : 0
+
+      if (!c.docente) {
+        items.push({
+          id: `sin-docente-${c.id}`,
+          prioridad: 'alta',
+          titulo: `Curso sin docente: ${c.nombre}`,
+          detalle: 'Asigna un docente para habilitar clases y seguimiento académico.',
+          cursoId: c.id,
+          accion: 'asignar_docente',
+        })
+      }
+
+      if (capacidad > 0 && ocupacion >= 90) {
+        items.push({
+          id: `alta-ocupacion-${c.id}`,
+          prioridad: 'media',
+          titulo: `Alta ocupación: ${c.nombre} (${ocupacion}%)`,
+          detalle: 'Revisa apertura de nuevo grupo o aumento de capacidad.',
+          cursoId: c.id,
+          accion: 'inscribir_estudiantes',
+        })
+      }
+
+      if (capacidad > 0 && ocupacion > 0 && ocupacion < 20) {
+        items.push({
+          id: `baja-ocupacion-${c.id}`,
+          prioridad: 'baja',
+          titulo: `Baja ocupación: ${c.nombre} (${ocupacion}%)`,
+          detalle: 'Evalúa acciones comerciales o reprogramación.',
+          cursoId: c.id,
+          accion: 'inscribir_estudiantes',
+        })
+      }
+    }
+
+    return items.sort((a, b) => {
+      const w = { alta: 3, media: 2, baja: 1 }
+      return w[b.prioridad] - w[a.prioridad]
+    })
+  }, [filtered])
+
+  const ejecutarAccionAlerta = (cursoId: number, accion: 'asignar_docente' | 'inscribir_estudiantes') => {
+    setSelectedCursoId(cursoId)
+    if (accion === 'asignar_docente') {
+      setShowAsignarModal(true)
+      return
+    }
+    setShowInscribirModal(true)
+  }
+
+  const selectedCurso = useMemo(
+    () => cursos.find((c) => c.id === selectedCursoId) ?? null,
+    [cursos, selectedCursoId],
+  )
+
+  const load = async () => {
+    setCargando(true)
+    setError(null)
+    try {
+      const [cursosApi, docentesApi, estudiantesApi, programasApi] = await Promise.all([
+        getAdminCursos(),
+        getAdminDocentes(),
+        getAdminEstudiantes(),
+        getAdminProgramas(),
+      ])
+      setCursos(Array.isArray(cursosApi) ? (cursosApi as typeof cursos) : [])
+      setDocentes(Array.isArray(docentesApi) ? (docentesApi as typeof docentes) : [])
+      setEstudiantes(Array.isArray(estudiantesApi) ? (estudiantesApi as typeof estudiantes) : [])
+      setProgramas(Array.isArray(programasApi) ? (programasApi as typeof programas) : [])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo cargar la información académica.')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
+
+  const patchCursoLocal = (
+    cursoId: number,
+    updater: (curso: (typeof cursos)[number]) => (typeof cursos)[number],
+  ) => {
+    setCursos((prev) => prev.map((c) => (c.id === cursoId ? updater(c) : c)))
+  }
+
+  const getCursoById = (cursoId: number) => cursos.find((c) => c.id === cursoId) ?? null
+
   const handleExport = () => {
-    if (!courses.length) return
-    const headers = ['Título', 'Modalidad', 'Nivel', 'Duración (semanas)', 'Horas/semana', 'Descripción']
-    const rows = courses.map(c => [c.title, c.modality, c.level, c.durationWeeks, c.weeklyHours, c.description])
-    const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `cursos_${new Date().toISOString().slice(0,10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => {
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }, 100)
+    void (async () => {
+      if (!cursos.length) return
+      const headers = ['Nombre', 'Código', 'Programa', 'Descripción', 'Docente', 'Inscritos', 'Capacidad']
+      const rows = cursos.map((c) => [
+        c.nombre,
+        c.codigo || '',
+        c.programa || '',
+        c.descripcion || '',
+        c.docente || 'Sin asignar',
+        c.estudiantes_inscritos || 0,
+        c.capacidad || 0,
+      ])
+      const csvContent = [headers, ...rows]
+        .map((r) => r.map((x) => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(','))
+        .join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      await saveBlobAs(blob, {
+        suggestedName: `cursos_${new Date().toISOString().slice(0, 10)}.csv`,
+        typeDescription: 'Cursos (CSV)',
+      })
+    })()
+  }
+
+  const crearPrograma = async () => {
+    if (!programaForm.nombre || !programaForm.codigo) return
+    const tempId = -Date.now()
+    const optimisticPrograma = {
+      id: tempId,
+      nombre: programaForm.nombre,
+      codigo: programaForm.codigo,
+      activo: true,
+    }
+    const prevProgramas = programas
+    try {
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          setProgramas((prev) => [optimisticPrograma, ...prev])
+          setShowProgramaModal(false)
+          setProgramaForm({ nombre: '', codigo: '', descripcion: '' })
+          setToast('Programa creado (pendiente confirmación)')
+          return () => setProgramas(prevProgramas)
+        },
+        request: () => createAdminPrograma(programaForm),
+        onSuccess: async () => {
+          setToast('Programa creado correctamente')
+          await load()
+        },
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo crear el programa')
+    }
+  }
+
+  const crearModulo = async () => {
+    if (!selectedCursoId || !moduloForm.titulo) return
+    const prevModulos = modulosRecientes[selectedCursoId] || []
+    const optimisticItem = { titulo: moduloForm.titulo, orden: Number(moduloForm.orden || 1) }
+    try {
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          setModulosRecientes((prev) => ({
+            ...prev,
+            [selectedCursoId]: [optimisticItem, ...(prev[selectedCursoId] || [])].slice(0, 3),
+          }))
+          setShowModuloModal(false)
+          setModuloForm({ titulo: '', descripcion: '', orden: 1 })
+          setToast('Módulo creado (pendiente confirmación)')
+          return () => setModulosRecientes((prev) => ({ ...prev, [selectedCursoId]: prevModulos }))
+        },
+        request: () => createCursoModulo(selectedCursoId, moduloForm),
+        onSuccess: () => setToast('Módulo creado correctamente'),
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo crear el módulo')
+    }
+  }
+
+  const asignarDocente = async () => {
+    if (!selectedCursoId || !docenteId) return
+    const docente = docentes.find((d) => d.id === docenteId)
+    const prevCurso = getCursoById(selectedCursoId)
+    if (!docente || !prevCurso) return
+
+    // Optimistic update: reflejar docente asignado de inmediato.
+    try {
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          patchCursoLocal(selectedCursoId, (c) => ({
+            ...c,
+            docente: `${docente.nombre} ${docente.apellido}`.trim(),
+          }))
+          setShowAsignarModal(false)
+          setDocenteId(null)
+          setToast('Docente asignado al curso')
+          return () => patchCursoLocal(selectedCursoId, () => prevCurso)
+        },
+        request: () => asignarDocenteCurso(selectedCursoId, docenteId),
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo asignar docente')
+    }
+  }
+
+  const inscribirEstudiantes = async () => {
+    if (!selectedCursoId || estudianteIds.length === 0) return
+    const prevCurso = getCursoById(selectedCursoId)
+    if (!prevCurso) return
+
+    const optimisticAdded = estudianteIds.length
+    try {
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          patchCursoLocal(selectedCursoId, (c) => ({
+            ...c,
+            estudiantes_inscritos: Number(c.estudiantes_inscritos || 0) + optimisticAdded,
+          }))
+          setShowInscribirModal(false)
+          setEstudianteIds([])
+          setToast(`Inscripciones procesando: ${optimisticAdded}`)
+          return () => patchCursoLocal(selectedCursoId, () => prevCurso)
+        },
+        request: () => inscribirEstudiantesCurso(selectedCursoId, estudianteIds),
+        onSuccess: (resp) => {
+          patchCursoLocal(selectedCursoId, (c) => ({
+            ...c,
+            estudiantes_inscritos: Number(prevCurso.estudiantes_inscritos || 0) + Number(resp.inscritas || 0),
+          }))
+          setToast(`Inscripciones creadas: ${resp.inscritas}`)
+        },
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo inscribir estudiantes')
+    }
   }
 
   return (
@@ -54,18 +325,16 @@ export function CursosPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-[var(--text)]">Cursos</p>
-            <p className="mt-1 text-xs text-[var(--muted)]">Vista tipo cards con modalidad presencial/virtual (mock).</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Gestión académica conectada: programas, módulos, asignación docente e inscripción.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" leftIcon={<BookOpen size={16} />} onClick={() => setShowCatalogModal(true)}>
-              Ver catálogo
-            </Button>
-            <Button variant="primary" onClick={() => setShowCreateModal(true)}>Crear curso</Button>
+            <Button variant="secondary" onClick={() => setShowProgramaModal(true)}>Nuevo programa</Button>
+            <Button variant="primary" onClick={load}>Actualizar</Button>
             <Button variant="secondary" onClick={handleExport}>Exportar</Button>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <label className="block">
             <span className="mb-2 block text-xs font-semibold text-[var(--muted)]">Buscar</span>
             <div className="relative">
@@ -81,115 +350,198 @@ export function CursosPage() {
             </div>
           </label>
           <label className="block">
-            <span className="mb-2 block text-xs font-semibold text-[var(--muted)]">Modalidad</span>
+            <span className="mb-2 block text-xs font-semibold text-[var(--muted)]">Programa</span>
             <select
-              value={modality}
-              onChange={(e) => setModality(e.target.value as 'Todas' | CourseModality)}
+              value={programaFiltro}
+              onChange={(e) => {
+                const value = e.target.value
+                setProgramaFiltro(value === 'todos' ? 'todos' : Number(value))
+              }}
               className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm text-[var(--text)]"
             >
-              <option value="Todas">Todas</option>
-              <option value="Presencial">Presencial</option>
-              <option value="Virtual">Virtual</option>
+              <option value="todos">Todos los programas</option>
+              {programas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} ({p.codigo})
+                </option>
+              ))}
             </select>
           </label>
-          <div className="flex items-end">
-            <div className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3">
-              <div className="flex items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl border border-[rgba(251,191,36,0.30)] bg-[rgba(251,191,36,0.10)]">
-                  <GraduationCap size={16} className="text-[var(--accent)]" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-[var(--muted)]">Resultados</p>
-                  <p className="text-sm font-semibold text-[var(--text)]">{filtered.length} cursos</p>
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3">
+              <p className="text-xs text-[var(--muted)]">Cursos</p>
+              <p className="text-lg font-semibold text-[var(--text)]">{metricas.totalCursos}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-3">
+              <p className="text-xs text-[var(--muted)]">Programas activos</p>
+              <p className="text-lg font-semibold text-[var(--text)]">{metricas.programasActivos}</p>
             </div>
           </div>
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((course) => (
-          <CourseCard key={course.id} course={course} onOpen={() => openCourse(course)} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card>
+          <p className="text-xs text-[var(--muted)]">Cursos con docente</p>
+          <p className="mt-1 text-xl font-semibold text-[var(--text)]">{metricas.conDocente}</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-[var(--muted)]">Cursos sin docente</p>
+          <p className="mt-1 text-xl font-semibold text-[var(--text)]">{metricas.sinDocente}</p>
+        </Card>
+        <Card>
+          <p className="text-xs text-[var(--muted)]">Ocupación promedio</p>
+          <p className="mt-1 text-xl font-semibold text-[var(--text)]">{metricas.ocupacionPromedio}%</p>
+        </Card>
+      </div>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[var(--text)]">Alertas operativas</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">Priorizadas para seguimiento diario del administrador.</p>
+          </div>
+          <Badge tone={alertas.length > 0 ? 'warning' : 'success'}>
+            {alertas.length} alertas
+          </Badge>
+        </div>
+        <div className="mt-3 space-y-2">
+          {alertas.length === 0 ? (
+            <p className="text-sm text-[var(--muted)]">No hay alertas activas con los filtros actuales.</p>
+          ) : (
+            alertas.slice(0, 10).map((a) => (
+              <div key={a.id} className="rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-[var(--text)]">{a.titulo}</p>
+                  <Badge tone={a.prioridad === 'alta' ? 'danger' : a.prioridad === 'media' ? 'warning' : 'neutral'}>
+                    {a.prioridad}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-xs text-[var(--muted)]">{a.detalle}</p>
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => ejecutarAccionAlerta(a.cursoId, a.accion)}
+                  >
+                    {a.accion === 'asignar_docente' ? 'Asignar docente' : 'Inscribir estudiantes'}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      {error ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+      {cargando ? <p className="text-sm text-[var(--muted)]">Cargando cursos...</p> : null}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {filtered.map((c) => (
+          <Card key={c.id}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-[var(--text)]">{c.nombre}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">{c.codigo || 'Sin código'}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">{c.programa || 'Sin programa'}</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">{c.descripcion || 'Sin descripción'}</p>
+              </div>
+              <Badge tone="neutral">{c.docente || 'Sin docente'}</Badge>
+            </div>
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              Inscritos: {c.estudiantes_inscritos || 0} / Capacidad: {c.capacidad || 0}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => { setSelectedCursoId(c.id); setShowModuloModal(true) }}>
+                Crear módulo
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => { setSelectedCursoId(c.id); setShowAsignarModal(true) }}>
+                Asignar docente
+              </Button>
+              <Button size="sm" onClick={() => { setSelectedCursoId(c.id); setShowInscribirModal(true) }}>
+                Inscribir estudiantes
+              </Button>
+            </div>
+            {(modulosRecientes[c.id]?.length || 0) > 0 ? (
+              <div className="mt-2">
+                <p className="text-xs text-[var(--muted)]">Módulos recientes:</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {modulosRecientes[c.id].map((m, idx) => (
+                    <Badge key={`${m.titulo}-${idx}`} tone="neutral">
+                      {m.orden}. {m.titulo}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </Card>
         ))}
       </div>
 
-      <Modal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title={selected ? `Curso · ${selected.title}` : 'Curso'}
-      >
-        {selected ? (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-center gap-2">
-                <Badge tone={selected.modality === 'Presencial' ? 'accent' : 'neutral'}>{selected.modality}</Badge>
-                <Badge tone="neutral">{selected.level}</Badge>
-              </div>
-              <div className="text-xs text-[var(--muted)]">
-                {selected.durationWeeks} semanas · {selected.weeklyHours}h/sem
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-4">
-              <p className="text-xs font-semibold text-[var(--muted)]">Descripción</p>
-              <p className="mt-2 text-sm text-[var(--text)]">{selected.description}</p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-4">
-                <p className="text-xs font-semibold text-[var(--muted)]">Incluye</p>
-                <ul className="mt-2 space-y-2 text-sm text-[var(--text)]">
-                  <li>Guías paso a paso</li>
-                  <li>Plantillas de patrones</li>
-                  <li>Acompañamiento del equipo</li>
-                </ul>
-              </div>
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--panel-2)] p-4">
-                <p className="text-xs font-semibold text-[var(--muted)]">Resultados esperados</p>
-                <ul className="mt-2 space-y-2 text-sm text-[var(--text)]">
-                  <li>Proyectos con acabado profesional</li>
-                  <li>Mejoras de técnica y fit</li>
-                  <li>Portafolio de trabajos</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button variant="secondary" onClick={() => setSelected(null)}>
-                Cerrar
-              </Button>
-              <Button variant="primary" onClick={() => setShowEnrollModal({ open: true, course: selected! })}>Inscribirme</Button>
-            </div>
-          </div>
-        ) : null}
-      </Modal>
-      {/* Modal crear curso */}
-      <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear curso">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm">(Mock) Aquí iría el formulario para crear un curso.</p>
-          <Button variant="primary" onClick={() => setShowCreateModal(false)}>Cerrar</Button>
-        </div>
-      </Modal>
-
-      {/* Modal catálogo */}
-      <Modal open={showCatalogModal} onClose={() => setShowCatalogModal(false)} title="Catálogo de cursos">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm">(Mock) Aquí se mostraría el catálogo completo de cursos.</p>
-          <Button variant="primary" onClick={() => setShowCatalogModal(false)}>Cerrar</Button>
-        </div>
-      </Modal>
-
-      {/* Modal inscripción */}
-      <Modal open={showEnrollModal.open} onClose={() => setShowEnrollModal({ open: false })} title="Inscribirse al curso">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm">¿Deseas inscribirte en el curso <b>{showEnrollModal.course?.title}</b>?</p>
-          <div className="flex gap-2 justify-end">
-            <Button variant="secondary" onClick={() => setShowEnrollModal({ open: false })}>Cancelar</Button>
-            <Button variant="primary" onClick={() => setShowEnrollModal({ open: false })}>Confirmar</Button>
+      <Modal open={showProgramaModal} onClose={() => setShowProgramaModal(false)} title="Crear programa académico">
+        <div className="space-y-2">
+          <input value={programaForm.nombre} onChange={(e) => setProgramaForm((p) => ({ ...p, nombre: e.target.value }))} placeholder="Nombre" className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm" />
+          <input value={programaForm.codigo} onChange={(e) => setProgramaForm((p) => ({ ...p, codigo: e.target.value }))} placeholder="Código" className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm" />
+          <textarea value={programaForm.descripcion} onChange={(e) => setProgramaForm((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción" className="min-h-24 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm" />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowProgramaModal(false)}>Cancelar</Button>
+            <Button onClick={() => void crearPrograma()}>Guardar</Button>
           </div>
         </div>
       </Modal>
+
+      <Modal open={showModuloModal} onClose={() => setShowModuloModal(false)} title={`Crear módulo · ${selectedCurso?.nombre || ''}`}>
+        <div className="space-y-2">
+          <input value={moduloForm.titulo} onChange={(e) => setModuloForm((p) => ({ ...p, titulo: e.target.value }))} placeholder="Título del módulo" className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm" />
+          <input type="number" min={1} value={moduloForm.orden} onChange={(e) => setModuloForm((p) => ({ ...p, orden: Number(e.target.value || 1) }))} placeholder="Orden" className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm" />
+          <textarea value={moduloForm.descripcion} onChange={(e) => setModuloForm((p) => ({ ...p, descripcion: e.target.value }))} placeholder="Descripción" className="min-h-24 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm" />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowModuloModal(false)}>Cancelar</Button>
+            <Button onClick={() => void crearModulo()}>Guardar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={showAsignarModal} onClose={() => setShowAsignarModal(false)} title={`Asignar docente · ${selectedCurso?.nombre || ''}`}>
+        <div className="space-y-2">
+          <select value={docenteId ?? ''} onChange={(e) => setDocenteId(Number(e.target.value))} className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 text-sm">
+            <option value="">Seleccionar docente</option>
+            {docentes.map((d) => <option key={d.id} value={d.id}>{d.nombre} {d.apellido} · {d.email}</option>)}
+          </select>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowAsignarModal(false)}>Cancelar</Button>
+            <Button onClick={() => void asignarDocente()}>Asignar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={showInscribirModal} onClose={() => setShowInscribirModal(false)} title={`Inscribir estudiantes · ${selectedCurso?.nombre || ''}`}>
+        <div className="space-y-2">
+          <div className="max-h-64 space-y-2 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-2">
+            {estudiantes.map((e) => (
+              <label key={e.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-white/40">
+                <input
+                  type="checkbox"
+                  checked={estudianteIds.includes(e.id)}
+                  onChange={(ev) => {
+                    setEstudianteIds((prev) => {
+                      if (ev.target.checked) return [...prev, e.id]
+                      return prev.filter((id) => id !== e.id)
+                    })
+                  }}
+                />
+                <span className="text-sm">{e.nombre} {e.apellido} · {e.email}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowInscribirModal(false)}>Cancelar</Button>
+            <Button onClick={() => void inscribirEstudiantes()}>Inscribir</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Toast message={toast} show={Boolean(toast)} onClose={() => setToast('')} />
     </div>
   )
 }

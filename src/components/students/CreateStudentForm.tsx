@@ -32,7 +32,7 @@ export function CreateStudentForm({
           const { data, error } = await import('../../lib/supabaseClient').then(m => m.supabase.from('sedes').select('id, city').order('city', { ascending: true }))
           if (error) throw new Error(error.message)
           setSedes(data || [])
-        } catch (err) {
+        } catch {
           setSedes([
             { id: 'loc_001', city: 'Medellín' },
             { id: 'loc_002', city: 'Bogotá' },

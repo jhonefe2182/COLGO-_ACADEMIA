@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card } from '../components/common/Card'
 import { Badge } from '../components/common/Badge'
 import { KpiCard } from '../components/dashboard/KpiCard'
@@ -6,6 +6,7 @@ import { BarChart, LineChart } from '../components/charts/MockCharts'
 import { formatCOP, formatDate } from '../services/mockData'
 import { Clock, CreditCard, MapPinned, ReceiptText, Sparkles, User } from 'lucide-react'
 import { useColgo } from '../state/useColgo'
+import { getAdminEstadisticas, subscribeRealtime } from '../services/apiClient'
 
 function iconForKind(kind: 'Matrícula' | 'Pago' | 'Curso' | 'Sede' | 'Estudiante') {
   const common = 'text-[rgba(113,63,18,0.95)]'
@@ -25,16 +26,57 @@ function iconForKind(kind: 'Matrícula' | 'Pago' | 'Curso' | 'Sede' | 'Estudiant
 
 export function DashboardPage() {
   const { students, payments, enrollments, courses, locations, recentActivity } = useColgo()
+  const [apiStats, setApiStats] = useState<{
+    estudiantes: number
+    docentes: number
+    cursos: number
+    matriculasActivas: number
+    usuarios?: number
+    ventas?: number
+  } | null>(null)
 
   const kpis = useMemo(() => {
     const revenue = payments.filter((p) => p.status === 'Aprobado').reduce((acc, p) => acc + p.amount, 0)
     return {
-      students: students.length,
-      revenue,
-      courses: courses.length,
+      students: apiStats?.estudiantes ?? students.length,
+      revenue: apiStats?.ventas ?? revenue,
+      courses: apiStats?.cursos ?? courses.length,
+      users: apiStats?.usuarios,
+      activeEnrollments: apiStats?.matriculasActivas,
       locations: locations.length,
+      source: apiStats ? 'api' : 'mock',
     }
-  }, [courses.length, locations.length, payments, students.length])
+  }, [apiStats, courses.length, locations.length, payments, students.length])
+
+  useEffect(() => {
+    let cancel = false
+    void (async () => {
+      try {
+        const stats = await getAdminEstadisticas()
+        if (!cancel) setApiStats(stats)
+      } catch {
+        if (!cancel) setApiStats(null)
+      }
+    })()
+    return () => {
+      cancel = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const sub = subscribeRealtime((type) => {
+      if (type !== 'grade_updated' && type !== 'final_grade_updated') return
+      void (async () => {
+        try {
+          const stats = await getAdminEstadisticas()
+          setApiStats(stats)
+        } catch {
+          // keep previous stats
+        }
+      })()
+    })
+    return () => sub?.close()
+  }, [])
 
   const { revenueSeries, matriculaSeries } = useMemo(() => {
     const msWeek = 1000 * 60 * 60 * 24 * 7
@@ -83,16 +125,20 @@ export function DashboardPage() {
         <KpiCard
           label="Estudiantes"
           value={kpis.students.toLocaleString('es-CO')}
-          sublabel="Crecimiento mensual simulado"
+          sublabel={kpis.source === 'api' ? 'Dato real backend' : 'Crecimiento mensual simulado'}
           accent
         />
         <KpiCard
-          label="Ingresos"
+          label="Ventas"
           value={formatCOP(kpis.revenue)}
-          sublabel="Últimos 30 días (mock)"
+          sublabel={kpis.source === 'api' ? 'Acumulado (backend)' : 'Últimos 30 días (mock)'}
         />
-        <KpiCard label="Cursos" value={String(kpis.courses)} sublabel="Activos en agenda" />
-        <KpiCard label="Sedes" value={String(kpis.locations)} sublabel="Medellín · Bogotá · Virtual" />
+        <KpiCard label="Cursos" value={String(kpis.courses)} sublabel={kpis.source === 'api' ? 'Total en sistema' : 'Activos en agenda'} />
+        <KpiCard
+          label="Usuarios"
+          value={String(kpis.users ?? kpis.locations)}
+          sublabel={kpis.source === 'api' ? `Matrículas activas: ${kpis.activeEnrollments ?? 0}` : 'Sedes activas (mock)'}
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">

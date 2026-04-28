@@ -7,8 +7,19 @@ import { Modal } from '../components/common/Modal'
 import { CreateStudentForm, type CreateStudentFormData } from '../components/students/CreateStudentForm'
 import { type Student, type StudentStatus } from '../services/mockData'
 import { StudentService } from '../services/studentSupabase'
+import { saveBlobAs } from '../utils/saveFileAs'
 import type { StudentInsert } from '../services/studentSupabase'
-import { Download, Eye, Plus, Trash2, Edit } from 'lucide-react'
+import { Download, Eye, Trash2, Edit } from 'lucide-react'
+import { withOptimisticUpdate } from '../utils/optimistic'
+
+/** Estudiante en edición: fila de tabla + campos extra cargados desde Supabase */
+type EditableStudent = Student & { sede_id?: string; email?: string; phone?: string }
+type StudentSede = Student['sede']
+
+function normalizeSede(city?: string): StudentSede {
+  if (city === 'Medellín' || city === 'Bogotá' || city === 'Virtual') return city
+  return 'Virtual'
+}
 
 function statusTone(status: StudentStatus): 'success' | 'warning' | 'danger' | 'neutral' | 'accent' {
   if (status === 'Activo') return 'success'
@@ -32,7 +43,7 @@ export function EstudiantesPage() {
           const { data, error } = await import('../lib/supabaseClient').then(m => m.supabase.from('sedes').select('id, city').order('city', { ascending: true }))
           if (error) throw new Error(error.message)
           setSedes(data || [])
-        } catch (err) {
+        } catch {
           setSedes([
             { id: 'loc_001', city: 'Medellín' },
             { id: 'loc_002', city: 'Bogotá' },
@@ -49,7 +60,7 @@ export function EstudiantesPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [editStudent, setEditStudent] = useState<any>(null)
+  const [editStudent, setEditStudent] = useState<EditableStudent | null>(null)
   const [editLoading, setEditLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
@@ -94,7 +105,7 @@ export function EstudiantesPage() {
       const matchesSede = sedeFiltro === 'Todas' || s.sede === sedeFiltro
       return matchesQuery && matchesStatus && matchesSede
     })
-  }, [q, sedeFiltro, status, students, sedes])
+  }, [q, sedeFiltro, status, students])
 
   const handleCreateStudent = async (formData: CreateStudentFormData) => {
     setIsCreating(true)
@@ -109,8 +120,26 @@ export function EstudiantesPage() {
         email: formData.email,
         phone: formData.phone,
       }
-      await StudentService.create(payload)
-      await reloadStudents()
+      const tempId = `tmp-${Date.now()}`
+      const optimisticStudent: Student = {
+        id: tempId,
+        name: formData.name,
+        document: formData.document,
+        sede: normalizeSede(sedes.find((s) => s.id === formData.sede_id)?.city),
+        status: formData.status,
+        courseTitle: 'Curso asignado',
+      }
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          const prevStudents = students
+          setStudents((prev) => [optimisticStudent, ...prev])
+          return () => setStudents(prevStudents)
+        },
+        request: () => StudentService.create(payload),
+        onSuccess: async () => {
+          await reloadStudents()
+        },
+      })
       setShowCreateModal(false)
       setSuccess('Estudiante creado correctamente')
     } catch (err) {
@@ -125,8 +154,14 @@ export function EstudiantesPage() {
     setError(null)
     setSuccess(null)
     try {
-      await StudentService.remove(id)
-      await reloadStudents()
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          const prevStudents = students
+          setStudents((prev) => prev.filter((s) => s.id !== id))
+          return () => setStudents(prevStudents)
+        },
+        request: () => StudentService.remove(id),
+      })
       setSelected(null)
       setSuccess('Estudiante eliminado correctamente')
     } catch (err) {
@@ -140,15 +175,28 @@ export function EstudiantesPage() {
     setError(null)
     setSuccess(null)
     try {
-      await StudentService.update(editStudent.id, {
+      const patch: Partial<Student> = {
         name: formData.name,
         document: formData.document,
-        sede_id: formData.sede_id,
+        sede: normalizeSede(sedes.find((s) => s.id === formData.sede_id)?.city || editStudent.sede),
         status: formData.status,
-        email: formData.email,
-        phone: formData.phone,
+      }
+      await withOptimisticUpdate({
+        applyOptimistic: () => {
+          const prevStudents = students
+          setStudents((prev) => prev.map((s) => (s.id === editStudent.id ? { ...s, ...patch } : s)))
+          return () => setStudents(prevStudents)
+        },
+        request: () =>
+          StudentService.update(editStudent.id, {
+            name: formData.name,
+            document: formData.document,
+            sede_id: formData.sede_id,
+            status: formData.status,
+            email: formData.email,
+            phone: formData.phone,
+          }),
       })
-      await reloadStudents()
       setEditStudent(null)
       setSuccess('Estudiante editado correctamente')
     } catch (err) {
@@ -235,23 +283,20 @@ export function EstudiantesPage() {
     return { active, pending, inactive }
   }, [students])
 
-  // Exportar estudiantes a CSV
   const handleExport = () => {
-    if (!students.length) return
-    const headers = ['Nombre', 'Documento', 'Curso', 'Sede', 'Estado']
-    const rows = students.map(s => [s.name, s.document, s.courseTitle, s.sede, s.status])
-    const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `estudiantes_${new Date().toISOString().slice(0,10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => {
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }, 100)
+    void (async () => {
+      if (!students.length) return
+      const headers = ['Nombre', 'Documento', 'Curso', 'Sede', 'Estado']
+      const rows = students.map((s) => [s.name, s.document, s.courseTitle, s.sede, s.status])
+      const csvContent = [headers, ...rows]
+        .map((r) => r.map((x) => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(','))
+        .join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      await saveBlobAs(blob, {
+        suggestedName: `estudiantes_${new Date().toISOString().slice(0, 10)}.csv`,
+        typeDescription: 'Estudiantes (CSV)',
+      })
+    })()
   }
 
   return (
@@ -275,13 +320,6 @@ export function EstudiantesPage() {
               <div className="flex gap-2">
                 <Button variant="secondary" leftIcon={<Download size={16} />} onClick={handleExport}>
                   Exportar
-                </Button>
-                <Button
-                  variant="primary"
-                  leftIcon={<Plus size={16} />}
-                  onClick={() => setShowCreateModal(true)}
-                >
-                  Nuevo
                 </Button>
               </div>
             </div>

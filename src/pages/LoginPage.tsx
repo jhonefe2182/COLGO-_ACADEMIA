@@ -1,36 +1,55 @@
-import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useState, type FormEvent, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../components/common/Button'
-import { useAuth } from '../state/useAuth'
+import { login } from '../services/apiClient'
+import { clearSession, getDashboardPathByRole, loadSessionUser, persistSession } from '../state/authSession'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const auth = useAuth()
-  const [username, setUsername] = useState('')
+  const location = useLocation()
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [cargando, setCargando] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
 
-    if (!username.trim() || !password) {
-      setError('Por favor ingresa usuario y contraseña.')
+    if (!email.trim() || !password) {
+      setError('Por favor ingresa email y contraseña.')
       return
     }
 
-    const success = auth.login(username, password)
-    if (success) {
-      navigate('/dashboard', { replace: true })
+    setCargando(true)
+    try {
+      // Realizar login con el backend
+      const data = await login(email.trim(), password.trim())
+
+      persistSession(data.token, data.usuario)
+      navigate(getDashboardPathByRole(data.usuario.rol), { replace: true })
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(errorMsg === 'Sesión expirada' ? 'Credenciales inválidas' : errorMsg)
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  const forceLogin = new URLSearchParams(location.search).get('force_login') === '1'
+
+  // Verificar si ya está autenticado
+  useEffect(() => {
+    if (forceLogin) {
+      // Si viene de correo de bienvenida, forzamos formulario de login para evitar salto automático.
+      clearSession()
       return
     }
-
-    setError('Usuario o contraseña incorrectos.')
-  }
-
-  if (auth.authenticated) {
-    return <Navigate to="/dashboard" replace />
-  }
+    const usuario = loadSessionUser()
+    if (usuario) {
+      navigate(getDashboardPathByRole(usuario.rol), { replace: true })
+    }
+  }, [forceLogin, navigate])
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -42,15 +61,24 @@ export function LoginPage() {
             <div className="max-w-xl space-y-6">
               <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_30px_60px_-40px_rgba(0,0,0,0.5)]">
                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#fbbf24]">COLGO</p>
-                <h2 className="mt-6 text-3xl font-semibold text-white">Acceso administrativo</h2>
+                <h2 className="mt-6 text-3xl font-semibold text-white">Sistema Académico Integral</h2>
                 <p className="mt-4 max-w-lg text-sm leading-6 text-white/70">
-                  Ingresa con tu usuario y contraseña para administrar estudiantes, matrículas y pagos.
+                  Plataforma educativa para administradores, docentes y estudiantes. Gestiona matrículas, calificaciones y reportes.
                 </p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-white/70">
-                <p className="font-semibold text-white">Cuenta temporal</p>
-                <p className="mt-3">Usuario: <span className="font-semibold text-[#fbbf24]">MARIO</span></p>
-                <p>Contraseña: <span className="font-semibold text-[#fbbf24]">123</span></p>
+                <p className="font-semibold text-white">Credenciales de Prueba</p>
+                <div className="mt-3 space-y-2 text-xs">
+                  <p><span className="font-semibold text-[#fbbf24]">Admin demo:</span></p>
+                  <p className="ml-2">Usuario: MARIO</p>
+                  <p className="ml-2">Contraseña: 123</p>
+                  
+                  <p className="mt-3"><span className="font-semibold text-[#fbbf24]">Usuarios nuevos (docente/estudiante):</span></p>
+                  <p className="ml-2">Usuario: cédula</p>
+                  <p className="ml-2">Contraseña inicial: cédula</p>
+                  
+                  <p className="mt-3 text-[#fbbf24]">✓ Ingresa con usuario y clave desde este panel</p>
+                </div>
               </div>
             </div>
           </div>
@@ -59,9 +87,11 @@ export function LoginPage() {
         <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-12">
           <div className="w-full max-w-xl space-y-8 rounded-[2rem] border border-[var(--border)] bg-[var(--surface)] p-10 shadow-soft">
             <div className="space-y-2">
-              <p className="text-sm font-semibold text-[var(--muted)]">Bienvenido de nuevo</p>
-              <h1 className="text-3xl font-semibold text-[var(--text)]">Accede a la plataforma</h1>
-              <p className="text-sm text-[var(--muted)]">Usa las credenciales temporales para iniciar sesión.</p>
+              <p className="text-sm font-semibold text-[var(--muted)]">Bienvenido</p>
+              <h1 className="text-3xl font-semibold text-[var(--text)]">Inicia sesión</h1>
+              <p className="text-sm text-[var(--muted)]">
+                Correo, usuario o <strong>cédula</strong> (docente/estudiante) y contraseña.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -72,12 +102,14 @@ export function LoginPage() {
               ) : null}
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[var(--muted)]">Usuario</span>
+                <span className="mb-2 block text-sm font-semibold text-[var(--muted)]">Correo, usuario o cédula</span>
                 <input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="MARIO"
-                  className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="correo@colgo.edu o número de cédula"
+                  type="text"
+                  disabled={cargando}
+                  className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)] disabled:opacity-50"
                 />
               </label>
 
@@ -87,18 +119,24 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type="password"
-                  placeholder="123"
-                  className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
+                  placeholder="••••••••"
+                  disabled={cargando}
+                  className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)] disabled:opacity-50"
                 />
               </label>
 
-              <Button type="submit" className="w-full" variant="primary">
-                Ingresar al sistema
+              <Button 
+                type="submit" 
+                className="w-full" 
+                variant="primary"
+                disabled={cargando}
+              >
+                {cargando ? 'Iniciando sesión...' : 'Ingresar al sistema'}
               </Button>
             </form>
 
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--panel-2)] px-4 py-4 text-sm text-[var(--muted)]">
-              <p>Al usar estas credenciales temporales, podrás explorar el panel y los datos de prueba.</p>
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-4 py-3 text-xs text-[var(--muted)]">
+              <p><strong>Conecta con backend:</strong> Asegúrate de que el servidor está corriendo en puerto 3001</p>
             </div>
           </div>
         </div>

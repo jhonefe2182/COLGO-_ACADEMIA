@@ -19,6 +19,8 @@ export function ColgoProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'ENROLLMENT/SET_STATUS', payload: { enrollmentId, status } }),
       createEnrollment: (enrollment) =>
         dispatch({ type: 'ENROLLMENT/CREATE', payload: { enrollment } }),
+      createLocation: (location) =>
+        dispatch({ type: 'LOCATION/CREATE', payload: { location } }),
     }),
     [],
   )

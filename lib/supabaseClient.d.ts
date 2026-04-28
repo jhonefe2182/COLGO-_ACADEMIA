@@ -1,3 +1,4 @@
-// Minimal declaración de tipos para supabaseClient.js
-// Puedes expandir esto según los métodos que exportes
-export const supabase: any;
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/** Cliente mínimo tipado para `supabaseClient.js` */
+export declare const supabase: SupabaseClient

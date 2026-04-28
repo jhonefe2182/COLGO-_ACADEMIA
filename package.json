@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node src/server/server.mjs",
+    "server": "node backend/index.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -18,24 +18,27 @@
     }
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
+    "express-validator": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^1.7.0",
     "mysql2": "^3.22.0",
+    "nodemailer": "^6.9.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.2",
-    "tailwind-merge": "^3.5.0",
-    "@supabase/supabase-js": "^2.38.0"
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "eslint": "^9.39.4",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

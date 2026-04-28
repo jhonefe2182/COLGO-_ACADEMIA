@@ -24,6 +24,7 @@ export type ColgoActions = {
   setPaymentStatus: (paymentId: string, status: PaymentStatus) => void
   setEnrollmentStatus: (enrollmentId: string, status: EnrollmentStatus) => void
   createEnrollment: (enrollment: Enrollment) => void
+  createLocation: (location: Location) => void
 }
 
 export type ColgoStore = ColgoState & {

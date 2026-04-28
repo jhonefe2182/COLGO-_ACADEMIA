@@ -9,6 +9,7 @@ import { Eye, Search } from 'lucide-react'
 import { useColgo } from '../state/useColgo'
 // import { v4 as uuidv4 } from 'uuid'
 import { uuidv4 } from '../utils/uuid'
+import { saveBlobAs } from '../utils/saveFileAs'
 
 function enrollmentTone(status: EnrollmentStatus): 'success' | 'warning' | 'danger' | 'neutral' | 'accent' {
   if (status === 'Activa') return 'success'
@@ -95,23 +96,32 @@ export function MatriculasPage() {
                 <p className="mt-1 text-xs text-[var(--muted)]">Gestión de estados: activa, pendiente y cancelada (mock).</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => {
-                  if (!enrollments.length) return;
-                  const headers = ['Estudiante', 'Curso', 'Estado', 'Inicio', 'Fin']
-                  const rows = enrollments.map(e => [e.studentName, e.courseTitle, e.status, e.startDate, e.endDate || ''])
-                  const csvContent = [headers, ...rows].map(r => r.map(x => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(',')).join('\n')
-                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = `matriculas_${new Date().toISOString().slice(0,10)}.csv`
-                  document.body.appendChild(a)
-                  a.click()
-                  setTimeout(() => {
-                    document.body.removeChild(a)
-                    URL.revokeObjectURL(url)
-                  }, 100)
-                }}>Exportar</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void (async () => {
+                      if (!enrollments.length) return
+                      const headers = ['Estudiante', 'Curso', 'Estado', 'Inicio', 'Fin']
+                      const rows = enrollments.map((e) => [
+                        e.studentName,
+                        e.courseTitle,
+                        e.status,
+                        e.startDate,
+                        e.endDate || '',
+                      ])
+                      const csvContent = [headers, ...rows]
+                        .map((r) => r.map((x) => `"${(x ?? '').toString().replace(/"/g, '""')}` + '"').join(','))
+                        .join('\n')
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                      await saveBlobAs(blob, {
+                        suggestedName: `matriculas_${new Date().toISOString().slice(0, 10)}.csv`,
+                        typeDescription: 'Matrículas (CSV)',
+                      })
+                    })()
+                  }}
+                >
+                  Exportar
+                </Button>
                 <Button variant="primary" onClick={() => setShowCreateModal(true)}>Crear matrícula</Button>
               </div>
             </div>

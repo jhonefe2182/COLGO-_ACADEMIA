@@ -37,6 +37,7 @@ export type Enrollment = {
   studentName: string
   courseTitle: string
   startDate: string // ISO
+  endDate?: string
   status: EnrollmentStatus
 }
 

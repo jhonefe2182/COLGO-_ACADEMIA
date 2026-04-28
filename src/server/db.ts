@@ -48,9 +48,9 @@ async function query<T = unknown>(sql: string, params: unknown[] = []): Promise<
 }
 
 // Funciones de utilidad para queries
-async function execute<T = unknown>(sql: string, params?: any): Promise<T> {
+async function execute<T = unknown>(sql: string, params?: unknown): Promise<T> {
   try {
-    const [result] = await pool.execute(sql, params) as [T, unknown];
+    const [result] = (await pool.execute(sql, params as never)) as [T, unknown];
     return result;
   } catch (error) {
     console.error('Error en execute:', sql, error);

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEventHandler, ReactNode } from 'react'
 import { cn } from '../../utils/cn'
 
 export type ButtonProps = {
@@ -8,7 +8,7 @@ export type ButtonProps = {
   size?: 'sm' | 'md' | 'lg'
   type?: 'button' | 'submit'
   disabled?: boolean
-  onClick?: () => void
+  onClick?: MouseEventHandler<HTMLButtonElement>
   leftIcon?: ReactNode
   rightIcon?: ReactNode
 }

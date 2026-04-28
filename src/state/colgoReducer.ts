@@ -1,6 +1,7 @@
 import type {
   Enrollment,
   EnrollmentStatus,
+  Location,
   Payment,
   PaymentStatus,
   RecentActivity,
@@ -13,6 +14,7 @@ type State = {
   students: Student[]
   payments: Payment[]
   enrollments: Enrollment[]
+  locations: Location[]
   recentActivity: RecentActivity[]
 }
 
@@ -22,6 +24,7 @@ type Action =
   | { type: 'PAYMENT/SET_STATUS'; payload: { paymentId: string; status: PaymentStatus } }
   | { type: 'ENROLLMENT/SET_STATUS'; payload: { enrollmentId: string; status: EnrollmentStatus } }
   | { type: 'ENROLLMENT/CREATE'; payload: { enrollment: Enrollment } }
+  | { type: 'LOCATION/CREATE'; payload: { location: Location } }
   | { type: 'ACTIVITY/PUSH'; payload: { activity: RecentActivity } }
 
 function uid(prefix: string) {
@@ -40,6 +43,7 @@ export const initialColgoState: State = {
   students: mockDB.students.map((s) => ({ ...s })),
   payments: mockDB.payments.map((p) => ({ ...p })),
   enrollments: mockDB.enrollments.map((e) => ({ ...e })),
+  locations: mockDB.locations.map((l) => ({ ...l })),
   recentActivity: mockDB.recentActivity.map((a) => ({ ...a })),
 }
 
@@ -157,6 +161,17 @@ export function colgoReducer(state: State, action: Action): State {
       return { ...state, students: [newStudent, ...state.students], recentActivity: [activity, ...state.recentActivity] }
     }
 
+    case 'LOCATION/CREATE': {
+      const newLocation = action.payload.location
+      const activity: RecentActivity = {
+        id: uid('act'),
+        kind: 'Sede',
+        title: 'Nueva sede creada',
+        detail: `${newLocation.city} · ${newLocation.address}`,
+        createdAt: nowISO(),
+      }
+      return { ...state, locations: [newLocation, ...state.locations], recentActivity: [activity, ...state.recentActivity] }
+    }
     default:
       return state
   }

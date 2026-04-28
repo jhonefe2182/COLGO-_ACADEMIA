@@ -1,50 +1,142 @@
----
+# 🎓 COLGO ACADEMIA - Sistema Académico SaaS
 
-## 🧪 Testing y Calidad
-
-- Ejecuta `npm run lint` para asegurar código limpio antes de cada commit.
-- Agrega pruebas unitarias en `src/__tests__/` usando Jest o Vitest para lógica crítica.
-- Usa `npm run test` (si tienes pruebas configuradas) para validar cambios.
+**Estado:** En construcción (Fase 1 - Reparación de interfaz)
 
 ---
 
-## ⚙️ CI/CD Sugerido
+## 📍 ¿DÓNDE ESTAMOS?
 
-Integra GitHub Actions para automatizar calidad y despliegue:
+**Estamos aquí:**
+- ✅ Estructura del proyecto completa
+- ✅ Frontend React + Tailwind
+- ✅ Backend Express
+- ✅ Autenticación básica (temporal)
+- ⏳ **Fase 1:** Verificar que interfaz funciona
+- ⛔ Fase 2+: BD, paneles, correos (próximamente)
 
-```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm install
-      - run: npm run lint
-      - run: npm run build
+---
+
+## 🚀 INICIO RÁPIDO
+
+### 1️⃣ Ejecutar automáticamente (RECOMENDADO)
+```bash
+# Haz doble clic en:
+START_ALL.bat
+
+# O ejecuta en PowerShell:
+.\START_ALL.bat
 ```
 
-Puedes agregar pasos para pruebas y despliegue automático a Vercel/Railway.
+Esto abrirá 2 ventanas automáticamente:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3001
+
+### 2️⃣ O ejecutar manualmente
+
+**Terminal 1 - Frontend:**
+```bash
+npm run dev
+```
+
+**Terminal 2 - Backend:**
+```bash
+npm run server
+```
 
 ---
 
-## 📞 Contacto y Créditos
+## 🔑 Credenciales de Prueba
 
-- Autor: [Tu Nombre]
-- Email: [tu.email@ejemplo.com]
-- LinkedIn: [linkedin.com/in/tuusuario](https://linkedin.com/in/tuusuario)
-- Soporte: Consulta los archivos de ayuda y documentación incluida.
+```
+Usuario:      MARIO
+Contraseña:   123
+Rol:          Admin
+```
 
 ---
 
-# COLGO SaaS Académico
+## 📊 Estructura del Proyecto
 
-Proyecto robusto y profesional para la gestión académica, desarrollado con React + Vite + TypeScript, Supabase y backend Node.js/Express. Incluye validación avanzada, feedback visual, conexión real a Supabase/MySQL y documentación completa.
+```
+src/
+├── server/              # Backend Express
+├── pages/               # Páginas React
+├── components/          # Componentes UI
+├── services/            # Llamadas API
+├── state/               # Context API
+└── types/               # TypeScript types
+```
+
+---
+
+## 📖 DOCUMENTACIÓN
+
+### Para comenzar (LEE ESTO PRIMERO):
+1. **[RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md)** - ¿Qué hacer ahora?
+2. **[VERIFICACION_INTERFAZ.md](./VERIFICACION_INTERFAZ.md)** - ¿No funciona? Lee aquí
+3. **[DIAGNOSTICO_Y_PLAN.md](./DIAGNOSTICO_Y_PLAN.md)** - Problemas identificados
+
+### Para entender la arquitectura:
+- **[PLAN_TECNICO.md](./PLAN_TECNICO.md)** - Arquitectura completa del sistema
+
+---
+
+## 🛠️ Tecnologías
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| Backend | Node.js, Express 5, TypeScript |
+| BD | MySQL 8.0+ |
+| Auth | JWT, bcryptjs |
+| Emails | Nodemailer |
+
+---
+
+## ✅ Checklist - "Todo funciona"
+
+- [ ] Ejecuté `START_ALL.bat` o ambos servidores
+- [ ] Accedí a http://localhost:5173
+- [ ] Vi página de login
+- [ ] Ingresé MARIO / 123
+- [ ] El dashboard abrió correctamente
+- [ ] No hay errores en F12 (Developer Tools)
+
+---
+
+## 🆘 Si algo no funciona
+
+1. Abre: **[VERIFICACION_INTERFAZ.md](./VERIFICACION_INTERFAZ.md)**
+2. Busca tu problema en la tabla "PROBLEMAS COMUNES"
+3. Sigue las soluciones
+
+---
+
+## 📋 Scripts disponibles
+
+```bash
+npm run dev        # Inicia frontend Vite
+npm run server     # Inicia backend Express
+npm run build      # Compilar para producción
+npm run lint       # Verificar código
+```
+
+---
+
+## 🎯 Próximas fases
+
+- **Fase 2:** Conectar BD MySQL real
+- **Fase 3:** Autenticación real con BD
+- **Fase 4:** Panel administrador completo
+- **Fase 5:** Panel estudiante
+- **Fase 6:** Panel docente
+- **Fase 7:** Sistema de correos automáticos
+
+---
+
+## 🤝 Contribuciones
+
+Este proyecto está en construcción activa. Para cambios importantes, por favor consulta primero.
 
 ---
 

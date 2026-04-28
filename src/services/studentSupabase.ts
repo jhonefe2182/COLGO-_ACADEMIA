@@ -1,6 +1,13 @@
-// @ts-ignore
 import { supabase } from '../../lib/supabaseClient'
 import { mockDB, type Student, type StudentStatus } from './mockData'
+
+type StudentRow = {
+  id: string
+  name: string
+  document: string
+  status: StudentStatus
+  sede?: { city?: string }
+}
 // Utilidad para generar UUID (compatible con navegadores modernos y Node.js)
 function generateId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -19,8 +26,7 @@ export interface StudentInsert {
   phone?: string
 }
 
-// Helper para mapear student de Supabase a modelo frontend
-function mapStudent(s: any, sedeName: string): Student {
+function mapStudent(s: StudentRow, sedeName: string): Student {
   return {
     id: s.id,
     name: s.name,
@@ -41,8 +47,8 @@ export const StudentService = {
         .order('name', { ascending: true })
       if (error) throw new Error(error.message)
       if (!data) return []
-      return data.map((s: any) => mapStudent(s, s.sede?.city || 'Virtual'))
-    } catch (err) {
+      return data.map((s: StudentRow) => mapStudent(s, s.sede?.city || 'Virtual'))
+    } catch {
       return mockDB.students
     }
   },

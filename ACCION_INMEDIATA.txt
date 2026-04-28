@@ -1,0 +1,56 @@
+# 🎬 TARJETA DE ACCIÓN INMEDIATA
+
+## ¿QUÉ HACER EN 5 MINUTOS?
+
+### PASO 1️⃣
+```
+Haz doble clic aquí:
+📁 START_ALL.bat
+```
+
+### PASO 2️⃣
+```
+Espera que se abran 2 ventanas
+(frontend y backend)
+```
+
+### PASO 3️⃣
+```
+Abre navegador:
+http://localhost:5173
+```
+
+### PASO 4️⃣
+```
+Ingresa:
+Usuario: MARIO
+Contraseña: 123
+
+Botón: Ingresar al sistema
+```
+
+### PASO 5️⃣
+```
+¿Ves el dashboard? 
+
+✅ SÍ  → Avísame "TODO FUNCIONA"
+❌ NO  → Abre F12 y cópiame el error
+```
+
+---
+
+## SI ALGO FALLA
+
+**Abre y sigue esto:**
+📄 VERIFICACION_INTERFAZ.md
+
+---
+
+## SI FUNCIONA TODO
+
+**Lee esto después:**
+📄 PLAN_TECNICO.md
+
+---
+
+**¡A INTENTAR! 💪**
