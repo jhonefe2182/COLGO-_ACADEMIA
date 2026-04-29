@@ -15,12 +15,16 @@ import { ColgoBrandBlock, rolEtiqueta as etiquetaModoInterfaz } from '../compone
 import {
   backofficeBottomAccentClass,
   backofficeDarkCardChrome,
-  backofficeDarkInnerPad,
   backofficeDarkOrbBottomLeft,
   backofficeDarkOrbTopRight,
   backofficePanelCardClass,
   backofficeDarkSurfaceGradient,
   backofficeDarkSurfaceInset,
+  backofficeTopHeaderPadClass,
+  backofficeTopHeaderFrameClass,
+  backofficeTopTwoBlockGridClass,
+  backofficeTopTwoBlockLeftClass,
+  backofficeTopTwoBlockRightClass,
 } from '../components/layout/backofficeVisual'
 import { cn } from '../utils/cn'
 import {
@@ -703,28 +707,29 @@ export default function AdminMiembroPanelPage() {
   const tabInnerBlockClass = 'rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 p-4'
 
   return (
-    <div className="flex min-h-0 flex-col gap-5 px-0 pb-10 pt-0 lg:gap-6 lg:pb-12 lg:pt-0">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] lg:items-stretch lg:gap-4">
-        <div className="min-h-0 self-stretch lg:col-start-1 lg:row-start-1">
-          <div className={cn('h-full w-full lg:rounded-l-none lg:border-l-0', backofficeDarkCardChrome)}>
-            <ColgoBrandBlock badgeLabel={etiquetaModoInterfaz(viewerRol)} variant="fichaHeader" alignHeightWithSibling />
+    <div className="flex min-h-0 w-full flex-col gap-5 px-0 pb-10 pt-0 lg:gap-6 lg:pb-12 lg:pt-0">
+      <div className={cn('w-full', backofficeTopTwoBlockGridClass)}>
+        <div className={backofficeTopTwoBlockLeftClass}>
+          <div className="px-3 pt-3">
+            <ColgoBrandBlock badgeLabel={etiquetaModoInterfaz(viewerRol)} variant="fichaHeader" className="rounded-2xl" />
           </div>
         </div>
 
-        <div className="min-w-0 self-stretch lg:col-start-2 lg:row-start-1">
-          <div className={cn('h-full w-full', backofficeDarkCardChrome)}>
-            <section
+        <div className={cn('w-full', backofficeTopTwoBlockRightClass)}>
+          <div className="mx-3 pt-3 lg:mx-0">
+            <header
               className={cn(
-                'relative overflow-hidden text-white',
+                'h-full text-white',
+                backofficeTopHeaderFrameClass,
+                backofficeDarkCardChrome,
                 backofficeDarkSurfaceGradient,
                 backofficeDarkSurfaceInset,
-                backofficeDarkInnerPad,
               )}
             >
               <div className={backofficeDarkOrbTopRight} aria-hidden />
               <div className={backofficeDarkOrbBottomLeft} aria-hidden />
               <div className={backofficeBottomAccentClass} aria-hidden />
-              <div className="relative z-10 grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-3">
+              <div className={cn(backofficeTopHeaderPadClass, 'min-h-0 pt-3 pb-[1cm] grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-3')}>
                 <div className="min-w-0 space-y-1">
                   <p className="truncate text-base font-semibold tracking-tight text-white lg:text-lg">{u.nombre_completo || u.email}</p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -796,14 +801,14 @@ export default function AdminMiembroPanelPage() {
                   ) : null}
                 </div>
                 {tab === 'resumen' ? (
-                  <div className="col-span-full flex justify-center border-t border-white/10 pt-1 lg:col-span-2 lg:border-t-0 lg:pt-0">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-1 z-20 flex justify-center">
                     <p className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-xs font-semibold tracking-wide text-white/95 shadow-[0_2px_12px_rgba(0,0,0,0.25)] backdrop-blur-md sm:px-4 sm:text-sm">
                       Resumen del miembro
                     </p>
                   </div>
                 ) : null}
               </div>
-            </section>
+            </header>
           </div>
         </div>
 
@@ -845,7 +850,7 @@ export default function AdminMiembroPanelPage() {
           </div>
         </aside>
 
-        <div className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-2">
+        <div className="min-w-0 w-full space-y-4 lg:col-start-2 lg:row-start-2">
           {mensaje ? (
             <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{mensaje}</div>
           ) : null}

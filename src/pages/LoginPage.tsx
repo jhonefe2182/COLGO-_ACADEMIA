@@ -38,11 +38,11 @@ export function LoginPage() {
 
   const forceLogin = new URLSearchParams(location.search).get('force_login') === '1'
 
-  // Verificar si ya está autenticado
+  // Si hay sesión guardada, /login redirige al panel; con ?force_login=1 se ignora y se pide usuario de nuevo.
   useEffect(() => {
     if (forceLogin) {
-      // Si viene de correo de bienvenida, forzamos formulario de login para evitar salto automático.
       clearSession()
+      navigate('/login', { replace: true })
       return
     }
     const usuario = loadSessionUser()

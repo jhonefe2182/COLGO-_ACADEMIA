@@ -28,6 +28,8 @@ import {
   backofficeDarkOrbTopRight,
   backofficeDarkSurfaceGradient,
   backofficeDarkSurfaceInset,
+  backofficeTopHeaderPadClass,
+  backofficeTopHeaderFrameClass,
 } from './backofficeVisual'
 
 type Notification = { id: string; title: string; detail: string; dateISO: string }
@@ -325,7 +327,8 @@ export function Header({
   return (
     <header
       className={cn(
-        'relative z-30 mx-3 overflow-hidden',
+        'mx-3',
+        backofficeTopHeaderFrameClass,
         backofficeDarkCardChrome,
         backofficeDarkSurfaceInset,
         backofficeDarkSurfaceGradient,
@@ -334,7 +337,7 @@ export function Header({
       <div className={backofficeBottomAccentClass} aria-hidden />
       <div className={backofficeDarkOrbTopRight} aria-hidden />
       <div className={backofficeDarkOrbBottomLeft} aria-hidden />
-      <div className="relative z-10 flex min-h-[127px] flex-wrap items-center gap-3 pb-6 pt-4 pl-4 pr-2 sm:pr-3 lg:pl-6 lg:pr-3">
+      <div className={cn(backofficeTopHeaderPadClass, 'flex flex-wrap items-center gap-3')}>
           <div className="flex items-center gap-3">
             <button
               type="button"

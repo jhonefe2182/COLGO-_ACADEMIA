@@ -342,7 +342,7 @@ function rolEtiqueta(rolDb) {
 }
 
 function isStaffUser(req) {
-  return String(req.user?.rol || '') === 'staff'
+  return String(req.user?.rol || '').toLowerCase() === 'staff'
 }
 
 function isAdminRole(rol) {
@@ -388,7 +388,7 @@ function buildPermissionPreset(nivelConfianza) {
 }
 
 async function getUserPermissions(userId, rol) {
-  const role = String(rol || '')
+  const role = String(rol || '').toLowerCase()
   if (role === 'admin') {
     return {
       nivel_confianza: 'alta',
@@ -433,7 +433,8 @@ async function getUserPermissions(userId, rol) {
 async function requireStaffPermission(req, res, permissionKey) {
   if (!isStaffUser(req)) return true
   await ensureSupportTables()
-  const perms = await getUserPermissions(Number(req.user?.id || 0), 'staff')
+  const actorRol = String(req.user?.rol || 'staff').toLowerCase()
+  const perms = await getUserPermissions(Number(req.user?.id || 0), actorRol)
   if (!perms[permissionKey]) {
     res.status(403).json({ error: 'No tienes permisos para esta acción según tu nivel de confianza.' })
     return false
@@ -503,7 +504,12 @@ async function ensureDocenteRow(usuarioId, nombre, apellido, documento) {
 async function getPersonaPorUsuarioId(usuarioId) {
   const rows = await query(
     `SELECT u.id, u.email, u.rol,
-        COALESCE(e.documento, d.documento, sp.documento, ap.documento) AS documento,
+        COALESCE(
+          NULLIF(TRIM(e.documento), ''),
+          NULLIF(TRIM(d.documento), ''),
+          NULLIF(TRIM(sp.documento), ''),
+          NULLIF(TRIM(ap.documento), '')
+        ) AS documento,
         COALESCE(
           TRIM(CONCAT(e.nombre, ' ', e.apellido)),
           TRIM(CONCAT(d.nombre, ' ', d.apellido)),
@@ -1144,10 +1150,37 @@ router.post('/:id/reenviar-bienvenida', async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' })
     }
 
-    const cedula = String(persona.documento ?? '').trim()
+    const emailTo = String(persona.email || '').trim()
+    if (!emailTo) {
+      return res.status(400).json({
+        error: 'El usuario no tiene correo electrónico registrado; no se puede enviar la invitación.',
+      })
+    }
+
+    let cedula = String(persona.documento ?? '').trim()
+    if (!cedula) {
+      const docRows = await query(
+        `SELECT COALESCE(
+            NULLIF(TRIM(e.documento), ''),
+            NULLIF(TRIM(d.documento), ''),
+            NULLIF(TRIM(sp.documento), ''),
+            NULLIF(TRIM(ap.documento), '')
+          ) AS doc
+         FROM usuarios u
+         LEFT JOIN estudiantes e ON e.usuario_id = u.id
+         LEFT JOIN docentes d ON d.usuario_id = u.id
+         LEFT JOIN staff_perfiles sp ON sp.usuario_id = u.id
+         LEFT JOIN admin_perfiles ap ON ap.usuario_id = u.id
+         WHERE u.id = ?
+         LIMIT 1`,
+        [id],
+      )
+      cedula = String(docRows?.[0]?.doc ?? '').trim()
+    }
     if (!cedula) {
       return res.status(400).json({
-        error: 'Este usuario no tiene cédula registrada para reenviar invitación.',
+        error:
+          'Este usuario no tiene documento de identidad en el perfil (estudiante/docente/staff/admin). Complétalo en «Perfil y datos» y vuelve a intentar.',
       })
     }
 
@@ -1158,7 +1191,7 @@ router.post('/:id/reenviar-bienvenida', async (req, res) => {
     if (persona.rol === 'docente') panelUrl = `${baseFront}/docente/dashboard`
 
     const emailResult = await sendColgoUsuarioInvitacion({
-      to: String(persona.email || ''),
+      to: emailTo,
       nombreCompleto: String(persona.nombre_completo || persona.email || 'Usuario'),
       cedula,
       rolEtiqueta: rolEtiqueta(String(persona.rol)),

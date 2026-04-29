@@ -162,6 +162,20 @@ function withForcedLoginQuery(loginUrl) {
   }
 }
 
+/** Producción por defecto para enlaces en correos (evita localhost si el servidor no tiene Origin). */
+const DEFAULT_EMAIL_PUBLIC_APP_URL = 'https://colgo-academia.vercel.app'
+
+function resolveEmailPublicAppBase() {
+  const fromEnv = String(process.env.FRONTEND_URL || '').trim().replace(/\/$/, '')
+  if (fromEnv) return fromEnv
+  return DEFAULT_EMAIL_PUBLIC_APP_URL.replace(/\/$/, '')
+}
+
+/** Botón «Ir a iniciar sesión»: siempre /login con force_login sobre la URL pública configurada. */
+function buildForcedLoginUrlForEmail() {
+  return withForcedLoginQuery(`${resolveEmailPublicAppBase()}/login`)
+}
+
 function getWelcomePanelCopy(roleLabel) {
   const isDocente = /docent/i.test(String(roleLabel || ''))
   const isStaff = /staff/i.test(String(roleLabel || ''))
@@ -233,7 +247,7 @@ export async function sendCredentialsEmail(
     const baseFront = resolveFrontBaseFromLogin(loginUrl)
     const studentPanelUrl = panelUrl || `${baseFront}/estudiante/dashboard`
     const welcomeCopy = getWelcomePanelCopy('estudiante')
-    const forcedLoginUrl = withForcedLoginQuery(loginUrl)
+    const forcedLoginUrl = buildForcedLoginUrlForEmail()
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -280,6 +294,10 @@ export async function sendCredentialsEmail(
                 Presiona el botón de acceso para entrar a tu panel.
               </p>
               <a href="${forcedLoginUrl}" class="button">Acceder a COLGO ACADEMIA</a>
+              <p style="margin-top:14px;font-size:13px;color:#4b5563;line-height:1.5;">
+                <strong>Si el botón no funciona,</strong> copia y pega esta dirección en tu navegador:<br/>
+                <a href="${forcedLoginUrl}" style="color:#4338ca;word-break:break-all;">${forcedLoginUrl}</a>
+              </p>
             </div>
             <div class="footer">
               <p>© COLGO ACADEMIA - Sistema Académico</p>
@@ -381,6 +399,9 @@ export async function sendColgoUsuarioInvitacion({
   loginUrl,
   panelUrl,
 }) {
+  if (!String(to || '').trim()) {
+    return { success: false, skipped: true, error: 'Destinatario de correo vacío' }
+  }
   if (!isSmtpConfigured()) {
     console.warn('[SMTP] Invitación no enviada: SMTP_USER / SMTP_PASSWORD no configurados')
     return { success: false, skipped: true, error: 'SMTP no configurado' }
@@ -392,7 +413,7 @@ export async function sendColgoUsuarioInvitacion({
   }
 
   const welcomeCopy = getWelcomePanelCopy(rolEtiqueta)
-  const forcedLoginUrl = withForcedLoginQuery(loginUrl)
+  const forcedLoginUrl = buildForcedLoginUrlForEmail()
   const htmlContent = `
       <!DOCTYPE html>
       <html><head><meta charset="UTF-8"></head>
@@ -410,6 +431,10 @@ export async function sendColgoUsuarioInvitacion({
             Presiona el botón de acceso para entrar a tu panel.
           </p>
           <p><a href="${forcedLoginUrl}" style="display:inline-block;background:#f59e0b;color:#111;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700;">Ir a iniciar sesión</a></p>
+          <p style="margin-top:10px;font-size:13px;color:#4b5563;line-height:1.5;">
+            <strong>Si el botón no funciona,</strong> copia y pega esta dirección en tu navegador:<br/>
+            <a href="${forcedLoginUrl}" style="color:#2563eb;word-break:break-all;">${forcedLoginUrl}</a>
+          </p>
           <p style="margin-top:16px;"><strong>Recuerda tus datos de acceso:</strong></p>
           <table style="border-collapse:collapse;margin:10px 0 14px;width:100%;">
             <tr><td style="padding:8px;border:1px solid #e5e7eb;"><strong>Usuario</strong> (cédula)</td>
@@ -462,6 +487,7 @@ export async function sendAdminPasswordResetEmail({
   const transporter = getMailTransport()
   if (!transporter) return { success: false, skipped: true, error: 'SMTP no configurado' }
 
+  const resetLoginUrl = buildForcedLoginUrlForEmail()
   const html = `
     <div style="max-width:560px;margin:0 auto;padding:20px;font-family:Segoe UI,Arial,sans-serif;line-height:1.6;color:#111">
       <h2 style="color:#b45309">COLGO ACADEMIA</h2>
@@ -471,10 +497,14 @@ export async function sendAdminPasswordResetEmail({
         ${passwordTemporal}
       </div>
       <p style="margin-top:12px;">Por seguridad, deberás cambiarla en tu próximo inicio de sesión.</p>
-      <p><a href="${loginUrl}" style="display:inline-block;background:#f59e0b;color:#111;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;">Ir a iniciar sesión</a></p>
+      <p><a href="${resetLoginUrl}" style="display:inline-block;background:#f59e0b;color:#111;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;">Ir a iniciar sesión</a></p>
+      <p style="margin-top:10px;font-size:13px;color:#4b5563;line-height:1.5;">
+        <strong>Si el botón no funciona,</strong> copia y pega esta dirección en tu navegador:<br/>
+        <a href="${resetLoginUrl}" style="color:#2563eb;word-break:break-all;">${resetLoginUrl}</a>
+      </p>
     </div>
   `
-  const text = `Hola ${nombreCompleto}, tu contraseña temporal de COLGO es: ${passwordTemporal}. Debes cambiarla al iniciar sesión. Acceso: ${loginUrl}`
+  const text = `Hola ${nombreCompleto}, tu contraseña temporal de COLGO es: ${passwordTemporal}. Debes cambiarla al iniciar sesión. Acceso: ${resetLoginUrl}`
 
   try {
     const info = await transporter.sendMail({
