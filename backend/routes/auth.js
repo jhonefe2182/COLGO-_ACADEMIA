@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../db.js';
 import { validateLogin, handleValidationErrors } from '../utils/validators.js';
+import { authenticateJWT, authorizeRole } from '../middleware/auth.js';
+import { handleMePerfilGet, handleMePerfilPut } from './usuarios.js';
 
 const router = express.Router();
 
@@ -293,6 +295,16 @@ router.post('/refresh-token', (req, res) => {
     res.status(500).json({ error: 'Error al renovar token' });
   }
 });
+
+/**
+ * GET /api/auth/me/perfil — perfil extendido staff/admin (evita 404 en sub-router de usuarios).
+ */
+router.get('/me/perfil', authenticateJWT, authorizeRole('admin', 'staff'), handleMePerfilGet);
+
+/**
+ * PUT /api/auth/me/perfil
+ */
+router.put('/me/perfil', authenticateJWT, authorizeRole('admin', 'staff'), handleMePerfilPut);
 
 /**
  * GET /api/auth/me

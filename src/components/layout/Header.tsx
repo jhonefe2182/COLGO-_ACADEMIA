@@ -21,6 +21,14 @@ import { getSessionToken, loadSessionUser, persistSession } from '../../state/au
 import { Modal } from '../common/Modal'
 import { Button } from '../common/Button'
 import { changePassword, getUsuariosMePerfil, updateUsuariosMePerfil } from '../../services/apiClient'
+import {
+  backofficeBottomAccentClass,
+  backofficeDarkCardChrome,
+  backofficeDarkOrbBottomLeft,
+  backofficeDarkOrbTopRight,
+  backofficeDarkSurfaceGradient,
+  backofficeDarkSurfaceInset,
+} from './backofficeVisual'
 
 type Notification = { id: string; title: string; detail: string; dateISO: string }
 type FontScale = 'sm' | 'md' | 'lg'
@@ -315,45 +323,57 @@ export function Header({
   }
 
   return (
-    <header className="relative z-30 border-b border-[var(--border)] bg-[var(--surface)]">
-      <div className="flex flex-wrap items-center gap-3 py-3 pl-4 pr-2 sm:pr-3 lg:pl-6 lg:pr-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onOpenSidebar}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--panel-2)] text-[var(--text)] lg:hidden"
-            aria-label="Abrir menú"
-          >
-            <Menu size={18} />
-          </button>
-          <div>
-            <h1 className="text-base font-semibold text-[var(--text)]">{activePageLabel}</h1>
-          </div>
-        </div>
-
-        <div ref={rootRef} className="ml-auto flex w-full min-w-0 items-center gap-2 md:w-auto md:flex-1 md:gap-3">
-          <div className="relative min-w-0 w-full md:max-w-xl md:flex-1">
-            <label className="sr-only" htmlFor="global-search">Buscar</label>
-            <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--subtle)]">
-              <Search size={16} />
+    <header
+      className={cn(
+        'relative z-30 mx-3 overflow-hidden',
+        backofficeDarkCardChrome,
+        backofficeDarkSurfaceInset,
+        backofficeDarkSurfaceGradient,
+      )}
+    >
+      <div className={backofficeBottomAccentClass} aria-hidden />
+      <div className={backofficeDarkOrbTopRight} aria-hidden />
+      <div className={backofficeDarkOrbBottomLeft} aria-hidden />
+      <div className="relative z-10 flex min-h-[127px] flex-wrap items-center gap-3 pb-6 pt-4 pl-4 pr-2 sm:pr-3 lg:pl-6 lg:pr-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onOpenSidebar}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white lg:hidden"
+              aria-label="Abrir menú"
+            >
+              <Menu size={18} />
+            </button>
+            <div>
+              <h1 className="text-base font-semibold tracking-tight text-white">{activePageLabel}</h1>
             </div>
-            <input
-              id="global-search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                setSearchOpen(true)
-              }}
-              onFocus={() => setSearchOpen(true)}
-              placeholder="Buscar estudiantes, cursos, sedes..."
-              className={cn(
-                'h-10 w-full rounded-xl border bg-[var(--panel-2)] px-9 text-sm text-[var(--text)]',
-                'border-[var(--border)] placeholder:text-[var(--subtle)]',
-              )}
-            />
+          </div>
+
+          <div
+            ref={rootRef}
+            className="ml-auto flex w-full min-w-0 items-center gap-2 md:w-auto md:flex-1 md:gap-3"
+          >
+            <div className="relative min-w-0 w-full md:max-w-xl md:flex-1">
+              <label className="sr-only" htmlFor="global-search">
+                Buscar
+              </label>
+              <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/70">
+                <Search size={16} />
+              </div>
+              <input
+                id="global-search"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  setSearchOpen(true)
+                }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Buscar estudiantes, cursos, sedes..."
+                className="h-10 w-full rounded-xl border border-white/20 bg-white/10 px-9 text-sm text-white placeholder:text-white/65"
+              />
 
             {searchOpen && filtered.length > 0 ? (
-              <div className="absolute left-0 right-0 mt-2 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-soft">
+              <div className="absolute left-0 right-0 mt-2 overflow-hidden rounded-xl border border-white/20 bg-slate-900/95 shadow-soft backdrop-blur-sm">
                 <div className="px-3 py-2 text-xs font-semibold text-[var(--muted)]">Sugerencias</div>
                 <div className="max-h-72 overflow-auto">
                   {filtered.map((s) => (
@@ -365,14 +385,14 @@ export function Header({
                         setQuery('')
                         setSearchOpen(false)
                       }}
-                      className="flex w-full items-start gap-3 px-3 py-3 text-left transition hover:bg-[rgba(15,23,42,0.04)]"
+                      className="flex w-full items-start gap-3 px-3 py-3 text-left transition hover:bg-white/10"
                     >
                       <div className="pt-0.5">
                         <Badge tone={s.tag === 'Curso' ? 'accent' : 'neutral'}>{s.tag}</Badge>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-semibold text-[var(--text)]">{s.label}</div>
-                        <div className="truncate text-xs text-[var(--muted)]">{s.description}</div>
+                        <div className="truncate text-sm font-semibold text-white">{s.label}</div>
+                        <div className="truncate text-xs text-slate-300">{s.description}</div>
                       </div>
                     </button>
                   ))}
@@ -381,7 +401,7 @@ export function Header({
             ) : null}
           </div>
 
-          <div className="ml-auto mr-[1cm] flex shrink-0 items-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 pr-1 sm:gap-2 sm:pr-2 md:gap-2.5 lg:gap-3 lg:pr-3">
             <div className="relative">
               <button
                 type="button"
@@ -389,24 +409,24 @@ export function Header({
                   setNotifOpen((v) => !v)
                   setUserOpen(false)
                 }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--panel-2)] text-[var(--text)]"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white"
                 aria-label="Notificaciones"
               >
                 <Bell size={18} />
               </button>
 
               {notifOpen ? (
-                <div className="absolute right-0 mt-2 w-[360px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-soft">
-                  <div className="px-4 py-3 text-xs font-semibold text-[var(--muted)]">Notificaciones</div>
+                <div className="absolute right-0 mt-2 w-[360px] overflow-hidden rounded-xl border border-white/20 bg-slate-900/95 shadow-soft backdrop-blur-sm">
+                  <div className="px-4 py-3 text-xs font-semibold text-slate-300">Notificaciones</div>
                   <div className="max-h-80 overflow-auto">
                     {mockNotifications.map((n) => (
-                      <div key={n.id} className="border-t border-[var(--border)] px-4 py-3">
+                      <div key={n.id} className="border-t border-white/15 px-4 py-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-[var(--text)]">{n.title}</p>
-                            <p className="mt-1 max-h-8 overflow-hidden text-xs text-[var(--muted)]">{n.detail}</p>
+                            <p className="truncate text-sm font-semibold text-white">{n.title}</p>
+                            <p className="mt-1 max-h-8 overflow-hidden text-xs text-slate-300">{n.detail}</p>
                           </div>
-                          <span className="shrink-0 text-xs text-[var(--subtle)]">{formatDate(n.dateISO)}</span>
+                          <span className="shrink-0 text-xs text-slate-400">{formatDate(n.dateISO)}</span>
                         </div>
                       </div>
                     ))}
@@ -414,7 +434,7 @@ export function Header({
                   <div className="px-4 py-3">
                     <button
                       type="button"
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-sm font-semibold text-[var(--text)] hover:bg-[#f1f5f9]"
+                      className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20"
                     >
                       Ver todo
                     </button>
@@ -433,15 +453,18 @@ export function Header({
                   setUserOpen((v) => !v)
                   setNotifOpen(false)
                 }}
-                className="hidden max-w-[220px] items-center gap-2 rounded-xl border border-transparent px-2 py-2 text-right transition hover:border-[var(--border)] hover:bg-[var(--panel-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] sm:max-w-[260px] md:flex md:max-w-[300px] lg:max-w-[400px]"
+                className="hidden max-w-[220px] items-center gap-2 rounded-xl border border-transparent px-2 py-2 text-right transition hover:border-white/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] sm:max-w-[260px] md:flex md:max-w-[300px] lg:max-w-[400px]"
               >
-                <p className="min-w-0 flex-1 truncate text-base font-bold tracking-tight text-[var(--text)] lg:text-lg">
+                <p className="min-w-0 flex-1 truncate text-base font-bold tracking-tight text-white lg:text-lg">
                   {nombreCabecera}
                 </p>
                 <ChevronDown
                   size={20}
                   strokeWidth={2.25}
-                  className={cn('shrink-0 text-[var(--text)]/55 transition lg:h-[22px] lg:w-[22px]', userOpen && 'rotate-180')}
+                  className={cn(
+                    'shrink-0 text-white/70 transition lg:h-[22px] lg:w-[22px]',
+                    userOpen && 'rotate-180',
+                  )}
                 />
               </button>
 
@@ -454,7 +477,7 @@ export function Header({
                   setUserOpen((v) => !v)
                   setNotifOpen(false)
                 }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--panel-2)] text-[var(--text)] transition hover:bg-[var(--surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] md:hidden"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] md:hidden"
               >
                 <Settings size={18} />
                 <span className="sr-only">Cuenta y configuración</span>
@@ -462,13 +485,13 @@ export function Header({
 
               {userOpen ? (
                 <div
-                  className="absolute right-0 z-40 mt-1.5 w-56 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-soft"
+                  className="absolute right-0 z-40 mt-1.5 w-56 overflow-hidden rounded-xl border border-white/20 bg-slate-900/95 shadow-soft backdrop-blur-sm"
                   role="menu"
                 >
                   <button
                     type="button"
                     role="menuitem"
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-[var(--text)] hover:bg-[rgba(15,23,42,0.04)]"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-white hover:bg-white/10"
                     onClick={() => {
                       setUserOpen(false)
                       setProfileOpen(true)
@@ -488,7 +511,7 @@ export function Header({
               className="pointer-events-none flex shrink-0 select-none items-center justify-center"
               aria-hidden="true"
             >
-              <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-full bg-[var(--panel-2)] shadow-[0_8px_28px_rgba(15,23,42,0.12)] ring-2 ring-[var(--border)]/80 md:h-[5.5rem] md:w-[5.5rem] lg:h-24 lg:w-24">
+              <div className="grid h-20 w-20 place-items-center overflow-hidden rounded-full bg-white/10 shadow-[0_8px_28px_rgba(15,23,42,0.45)] ring-2 ring-white/25 md:h-[5.5rem] md:w-[5.5rem] lg:h-24 lg:w-24">
                 {profile.avatarDataUrl ? (
                   <img
                     src={profile.avatarDataUrl}

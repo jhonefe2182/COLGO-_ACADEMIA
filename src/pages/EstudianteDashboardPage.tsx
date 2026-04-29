@@ -18,6 +18,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { withOptimisticUpdate } from '../utils/optimistic'
 import { PAIS_COLOMBIA, PAISES_OPCIONES } from '../data/paisesLista'
 import { useColombiaMunicipios } from '../hooks/useColombiaMunicipios'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 
 type StudentCourse = {
   id: number
@@ -250,7 +252,7 @@ export function EstudianteDashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="flex items-center justify-between">
+      <Card className={cn(backofficePanelCardClass, 'flex items-center justify-between')}>
         <div>
           <p className="text-base font-semibold text-[var(--text)]">{saludo}</p>
           <p className="mt-1 text-sm text-[var(--muted)]">Cursos inscritos: {nCursos}</p>

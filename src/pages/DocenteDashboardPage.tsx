@@ -14,6 +14,8 @@ import {
 import { BookOpen, ChevronDown, FolderOpen } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { withOptimisticUpdate } from '../utils/optimistic'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 
 type TeacherCourse = {
   id: number
@@ -297,7 +299,7 @@ export function DocenteDashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="flex items-center justify-between">
+      <Card className={cn(backofficePanelCardClass, 'flex items-center justify-between')}>
         <div>
           <p className="text-base font-semibold text-[var(--text)]">{saludo}</p>
           <p className="mt-1 text-sm text-[var(--muted)]">Cursos asignados: {nCursos}</p>
@@ -308,7 +310,7 @@ export function DocenteDashboardPage() {
 
       {seccion === 'dashboard' ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,320px)]">
-          <Card className="border-[var(--border)] bg-[var(--surface)]">
+          <Card className={backofficePanelCardClass}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-[var(--text)]">Mis cursos</p>
@@ -370,7 +372,7 @@ export function DocenteDashboardPage() {
               ))}
             </div>
           </Card>
-          <Card className="border-[var(--border)] bg-[var(--panel-2)]">
+          <Card className={backofficePanelCardClass}>
             <p className="text-sm font-semibold text-[var(--text)]">Accesos</p>
             <div className="mt-3 flex flex-col gap-2">
               <Button size="sm" className="w-full justify-start" onClick={() => navigate('/docente/estudiantes')}>

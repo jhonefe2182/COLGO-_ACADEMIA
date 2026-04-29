@@ -633,9 +633,9 @@ router.get('/logs', async (_req, res) => {
 })
 
 /**
- * GET /api/usuarios/me/perfil — perfil del usuario autenticado (staff o admin)
+ * Perfil propio staff/admin (montado en `GET/PUT /api/auth/me/perfil`).
  */
-router.get('/me/perfil', async (req, res) => {
+export async function handleMePerfilGet(req, res) {
   try {
     const rol = String(req.user?.rol || '')
     if (rol !== 'staff' && rol !== 'admin') {
@@ -673,12 +673,9 @@ router.get('/me/perfil', async (req, res) => {
     console.error(err)
     return res.status(500).json({ error: 'Error al obtener el perfil' })
   }
-})
+}
 
-/**
- * PUT /api/usuarios/me/perfil — actualizar perfil del usuario autenticado (staff o admin)
- */
-router.put('/me/perfil', async (req, res) => {
+export async function handleMePerfilPut(req, res) {
   try {
     const rol = String(req.user?.rol || '')
     if (rol !== 'staff' && rol !== 'admin') {
@@ -739,7 +736,7 @@ router.put('/me/perfil', async (req, res) => {
     }
     return res.status(500).json({ error: 'Error al actualizar el perfil' })
   }
-})
+}
 
 /**
  * GET /api/usuarios/:id/detalle — datos completos para edición por rol

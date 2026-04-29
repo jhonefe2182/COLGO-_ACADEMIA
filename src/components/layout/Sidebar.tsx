@@ -87,7 +87,6 @@ export function Sidebar({
   const navigate = useNavigate()
   const rol = loadSessionUser()?.rol
   const navItems = getNavItems(rol)
-
   return (
     <>
       <div
@@ -106,7 +105,9 @@ export function Sidebar({
           'lg:translate-x-0',
         )}
       >
-        <ColgoBrandBlock badgeLabel={rolEtiqueta(rol)} />
+        <div className="px-3 pt-3">
+          <ColgoBrandBlock badgeLabel={rolEtiqueta(rol)} variant="fichaHeader" className="rounded-2xl" />
+        </div>
 
         <div className="relative flex min-h-0 flex-1 flex-col">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-amber-50/40 to-transparent" aria-hidden />

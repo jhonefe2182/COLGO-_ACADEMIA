@@ -29,14 +29,14 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <Sidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
-      <div className="lg:pl-72">
+      <div className="lg:pl-72 lg:pt-3">
         <Header
           onOpenSidebar={() => setMobileOpen(true)}
           suggestions={suggestions}
           activePageLabel={activePageLabel}
         />
 
-        <main className="px-4 pb-6 pt-4 lg:px-6 lg:pb-8">
+        <main className="bg-gradient-to-b from-amber-50/40 via-[var(--bg)] to-[var(--bg)] px-4 pb-8 pt-4 lg:px-6 lg:pb-10 lg:pt-5">
           {cambiarPasswordPendiente ? (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               Recomendación de seguridad: actualiza tu contraseña inicial desde tu perfil/configuración.

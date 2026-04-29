@@ -15,6 +15,8 @@ import {
   inscribirEstudiantesCurso,
 } from '../services/apiClient'
 import { Search } from 'lucide-react'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 import { saveBlobAs } from '../utils/saveFileAs'
 import { withOptimisticUpdate } from '../utils/optimistic'
 
@@ -320,17 +322,23 @@ export function CursosPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card>
+    <div className="flex flex-col gap-5">
+      <Card className={cn(backofficePanelCardClass, 'p-4 sm:p-5')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-[var(--text)]">Cursos</p>
             <p className="mt-1 text-xs text-[var(--muted)]">Gestión académica conectada: programas, módulos, asignación docente e inscripción.</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setShowProgramaModal(true)}>Nuevo programa</Button>
-            <Button variant="primary" onClick={load}>Actualizar</Button>
-            <Button variant="secondary" onClick={handleExport}>Exportar</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setShowProgramaModal(true)}>
+              Nuevo programa
+            </Button>
+            <Button variant="primary" onClick={load}>
+              Actualizar
+            </Button>
+            <Button variant="secondary" onClick={handleExport}>
+              Exportar
+            </Button>
           </div>
         </div>
 

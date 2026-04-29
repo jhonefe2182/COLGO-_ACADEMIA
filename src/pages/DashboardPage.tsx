@@ -120,7 +120,7 @@ export function DashboardPage() {
   }, [enrollments, payments])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Estudiantes"

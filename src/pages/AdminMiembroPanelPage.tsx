@@ -8,19 +8,21 @@ import {
   type ReactNode,
 } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import {
-  Activity,
-  BookOpen,
-  ExternalLink,
-  LayoutDashboard,
-  Lock,
-  Mail,
-  Shield,
-  UserCircle2,
-} from 'lucide-react'
+import { Activity, BookOpen, ExternalLink, LayoutDashboard, Lock, Mail, Shield, UserCircle2 } from 'lucide-react'
 import { Button } from '../components/common/Button'
 import { Card } from '../components/common/Card'
 import { ColgoBrandBlock, rolEtiqueta as etiquetaModoInterfaz } from '../components/layout/ColgoBrandBlock'
+import {
+  backofficeBottomAccentClass,
+  backofficeDarkCardChrome,
+  backofficeDarkInnerPad,
+  backofficeDarkOrbBottomLeft,
+  backofficeDarkOrbTopRight,
+  backofficePanelCardClass,
+  backofficeDarkSurfaceGradient,
+  backofficeDarkSurfaceInset,
+} from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 import {
   asignarDocenteCurso,
   deleteUsuarioAdmin,
@@ -103,7 +105,7 @@ function presetByTrustLevel(nivel: UsuarioPermisos['nivel_confianza']): UsuarioP
 }
 
 const fieldClass =
-  'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-amber-400/25'
+  'h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--muted)] focus:border-[var(--accent)]'
 
 const profileLabelClass =
   'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]'
@@ -592,13 +594,13 @@ export default function AdminMiembroPanelPage() {
       <div className="min-h-[70vh] space-y-4 p-4 lg:p-8">
         <div className="h-9 w-44 animate-pulse rounded-xl bg-[var(--panel-2)]" />
         <div className="overflow-hidden rounded-2xl border border-slate-700/25 shadow-md">
-          <div className="space-y-4 bg-gradient-to-br from-slate-900 to-slate-800 p-5 sm:h-[10rem]">
-            <div className="h-6 w-56 max-w-full animate-pulse rounded bg-white/10" />
+          <div className="space-y-2 bg-gradient-to-br from-slate-900 to-slate-800 px-4 py-2.5 sm:px-5 sm:py-2.5 sm:h-[8.25rem]">
+            <div className="h-5 w-56 max-w-full animate-pulse rounded bg-white/10" />
             <div className="h-3 w-40 max-w-full animate-pulse rounded bg-white/10" />
-            <div className="flex flex-wrap gap-1.5 border-t border-white/10 pt-3">
-              <div className="h-6 w-16 animate-pulse rounded-md bg-white/10" />
-              <div className="h-6 w-20 animate-pulse rounded-md bg-white/10" />
-              <div className="h-6 w-14 animate-pulse rounded-md bg-white/10" />
+            <div className="flex flex-wrap gap-1 border-t border-white/10 pt-1.5">
+              <div className="h-7 w-16 animate-pulse rounded-md bg-white/10" />
+              <div className="h-7 w-20 animate-pulse rounded-md bg-white/10" />
+              <div className="h-7 w-14 animate-pulse rounded-md bg-white/10" />
             </div>
           </div>
         </div>
@@ -696,57 +698,35 @@ export default function AdminMiembroPanelPage() {
   const resumenTablaTituloTextClass = 'text-base font-bold tracking-tight text-[var(--text)]'
   const resumenTablaTituloThBaseClass =
     'border-b border-[var(--accent)] px-3 pb-2.5 pt-0 text-left align-bottom font-normal'
+  const tabCardClass = cn(backofficePanelCardClass, 'bg-gradient-to-b from-[var(--surface)] to-[var(--panel-2)] p-4 sm:p-5')
+  const tabHeaderTitleClass = 'text-base font-semibold tracking-tight text-[var(--text)]'
+  const tabInnerBlockClass = 'rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 p-4'
 
   return (
-    <div className="flex min-h-0 flex-col gap-5 bg-gradient-to-b from-amber-50/40 via-[var(--bg)] to-[var(--bg)] px-4 pb-10 pt-0 lg:gap-6 lg:px-0 lg:pb-12 lg:pt-0">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-b from-[var(--surface)] via-[#fffdf8] to-[var(--panel-2)] shadow-[6px_0_28px_rgba(15,23,42,0.08)] lg:sticky lg:top-0 lg:max-h-dvh lg:self-start lg:overflow-y-auto lg:rounded-l-none lg:rounded-r-2xl lg:border-l-0">
-          <ColgoBrandBlock badgeLabel={etiquetaModoInterfaz(viewerRol)} />
-          <div className="relative p-2">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-amber-50/40 to-transparent" aria-hidden />
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-[var(--accent)]/50 via-[var(--accent-2)]/25 to-transparent" aria-hidden />
-          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Secciones</p>
-          <nav className="flex flex-col gap-1" aria-label="Secciones de la ficha">
-            {tabItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                className={`group inline-flex items-center gap-2 rounded-xl border px-2.5 py-2.5 text-left text-sm transition ${
-                  tab === item.id
-                    ? 'border-slate-200 bg-gradient-to-r from-white to-slate-100/75 font-semibold text-[var(--text)] shadow-sm ring-1 ring-[rgba(251,191,36,0.18)]'
-                    : 'border-transparent font-medium text-[var(--text)]/78 hover:border-slate-300/70 hover:bg-gradient-to-r hover:from-slate-100/95 hover:to-slate-200/75 hover:text-[var(--text)]'
-                }`}
-              >
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
-                    tab === item.id
-                      ? 'border-slate-300/80 bg-slate-100/90 text-[rgba(113,63,18,0.95)]'
-                      : 'border-[rgba(15,23,42,0.08)] bg-slate-50/80 text-[var(--muted)] group-hover:border-slate-300/80 group-hover:bg-slate-200/85 group-hover:text-[var(--text)]'
-                  }`}
-                >
-                  {item.icon}
-                </span>
-                <span className="whitespace-nowrap">{item.label}</span>
-              </button>
-            ))}
-          </nav>
-          <div className="mt-3 border-t border-[var(--border)] pt-3">
-            <Button type="button" variant="primary" onClick={volverLista} className="w-full text-xs">
-              Volver
-            </Button>
+    <div className="flex min-h-0 flex-col gap-5 px-0 pb-10 pt-0 lg:gap-6 lg:pb-12 lg:pt-0">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] lg:items-stretch lg:gap-4">
+        <div className="min-h-0 self-stretch lg:col-start-1 lg:row-start-1">
+          <div className={cn('h-full w-full lg:rounded-l-none lg:border-l-0', backofficeDarkCardChrome)}>
+            <ColgoBrandBlock badgeLabel={etiquetaModoInterfaz(viewerRol)} variant="fichaHeader" alignHeightWithSibling />
           </div>
-          </div>
-        </aside>
+        </div>
 
-        <div className="min-w-0 space-y-4">
-          <div className="w-full overflow-hidden rounded-2xl border border-slate-700/25 shadow-xl ring-1 ring-black/5">
-            <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900/50 px-4 py-3 text-white sm:px-5 sm:pb-4 sm:pt-4">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl" />
-              <div className="pointer-events-none absolute bottom-0 left-1/4 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-              <div className="relative grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4">
-                <div className="min-w-0 space-y-1.5">
-                  <p className="truncate text-lg font-semibold tracking-tight text-white lg:text-xl">{u.nombre_completo || u.email}</p>
+        <div className="min-w-0 self-stretch lg:col-start-2 lg:row-start-1">
+          <div className={cn('h-full w-full', backofficeDarkCardChrome)}>
+            <section
+              className={cn(
+                'relative overflow-hidden text-white',
+                backofficeDarkSurfaceGradient,
+                backofficeDarkSurfaceInset,
+                backofficeDarkInnerPad,
+              )}
+            >
+              <div className={backofficeDarkOrbTopRight} aria-hidden />
+              <div className={backofficeDarkOrbBottomLeft} aria-hidden />
+              <div className={backofficeBottomAccentClass} aria-hidden />
+              <div className="relative z-10 grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-3">
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate text-base font-semibold tracking-tight text-white lg:text-lg">{u.nombre_completo || u.email}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-white/95 backdrop-blur-sm">
                       ID {u.id}
@@ -769,14 +749,14 @@ export default function AdminMiembroPanelPage() {
                     </span>
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5 border-t border-white/10 pt-2 sm:border-t-0 sm:pt-0 lg:flex-col lg:items-stretch lg:border-t-0 lg:pt-0">
+                <div className="flex flex-wrap gap-1 border-t border-white/10 pt-1.5 sm:border-t-0 sm:pt-0 lg:flex-col lg:items-stretch lg:border-t-0 lg:pt-0">
                   <Button
                     type="button"
                     size="sm"
                     variant="secondary"
                     disabled={cambiandoEstado}
                     onClick={toggleActivo}
-                    className="h-8 min-h-0 border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/18 lg:min-w-[10.5rem]"
+                    className="h-7 min-h-0 border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/18 lg:min-w-[10.5rem]"
                   >
                     {cambiandoEstado ? '…' : u.activo ? 'Desactivar' : 'Activar'}
                   </Button>
@@ -786,7 +766,7 @@ export default function AdminMiembroPanelPage() {
                     variant="secondary"
                     disabled={reenviando}
                     onClick={reenviar}
-                    className="h-8 min-h-0 border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/18 lg:min-w-[10.5rem]"
+                    className="h-7 min-h-0 border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/18 lg:min-w-[10.5rem]"
                   >
                     {reenviando ? 'Enviando…' : 'Reenviar bienvenida'}
                   </Button>
@@ -796,7 +776,7 @@ export default function AdminMiembroPanelPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Abre la supervisión visual (solo lectura: cursos y datos del usuario) en una pestaña nueva. Esta ficha permanece abierta."
-                      className="inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white transition hover:bg-white/18 lg:min-w-[10.5rem]"
+                      className="inline-flex h-7 min-h-0 min-w-0 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/20 bg-white/10 px-2.5 text-xs font-medium text-white transition hover:bg-white/18 lg:min-w-[10.5rem]"
                     >
                       Ver como
                       <ExternalLink className="h-3 w-3 opacity-90" aria-hidden />
@@ -809,15 +789,15 @@ export default function AdminMiembroPanelPage() {
                       variant="danger"
                       disabled={eliminando}
                       onClick={eliminarMiembro}
-                      className="h-8 min-h-0 border-red-400/35 bg-red-950/35 px-2.5 text-xs text-red-50 hover:bg-red-950/55 lg:min-w-[10.5rem]"
+                      className="h-7 min-h-0 border-red-400/35 bg-red-950/35 px-2.5 text-xs text-red-50 hover:bg-red-950/55 lg:min-w-[10.5rem]"
                     >
                       {eliminando ? 'Eliminando…' : 'Eliminar'}
                     </Button>
                   ) : null}
                 </div>
                 {tab === 'resumen' ? (
-                  <div className="col-span-full flex justify-center border-t border-white/10 pt-2 lg:col-span-2 lg:border-t-0 lg:pt-0">
-                    <p className="rounded-full border border-white/20 bg-white/10 px-4 py-0.5 text-xs font-semibold tracking-wide text-white/95 shadow-[0_2px_12px_rgba(0,0,0,0.25)] backdrop-blur-md sm:px-5 sm:py-1 sm:text-sm">
+                  <div className="col-span-full flex justify-center border-t border-white/10 pt-1 lg:col-span-2 lg:border-t-0 lg:pt-0">
+                    <p className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-xs font-semibold tracking-wide text-white/95 shadow-[0_2px_12px_rgba(0,0,0,0.25)] backdrop-blur-md sm:px-4 sm:text-sm">
                       Resumen del miembro
                     </p>
                   </div>
@@ -825,12 +805,56 @@ export default function AdminMiembroPanelPage() {
               </div>
             </section>
           </div>
+        </div>
+
+        <aside className="overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-b from-[var(--surface)] via-[#fffdf8] to-[var(--panel-2)] shadow-[6px_0_28px_rgba(15,23,42,0.08)] lg:sticky lg:top-0 lg:col-start-1 lg:row-start-2 lg:max-h-dvh lg:self-start lg:overflow-y-auto lg:rounded-l-none lg:rounded-r-2xl lg:border-l-0">
+          <div className="relative p-2">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-amber-50/40 to-transparent" aria-hidden />
+          <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-[var(--accent)]/50 via-[var(--accent-2)]/25 to-transparent" aria-hidden />
+          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Secciones</p>
+          <nav className="flex flex-col gap-1" aria-label="Secciones de la ficha">
+            {tabItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTab(item.id)}
+                className={`group flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-all duration-150 ${
+                  tab === item.id
+                    ? 'border border-slate-200 bg-gradient-to-r from-white to-slate-100/75 font-semibold text-[var(--text)] ring-1 ring-[rgba(251,191,36,0.18)]'
+                    : 'border border-transparent font-medium text-[var(--text)]/78 hover:border-slate-300/70 hover:bg-gradient-to-r hover:from-slate-100/95 hover:to-slate-200/75 hover:text-[var(--text)]'
+                }`}
+              >
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+                    tab === item.id
+                      ? 'border-slate-300/80 bg-slate-100/90 text-[rgba(113,63,18,0.95)]'
+                      : 'border-[rgba(15,23,42,0.08)] bg-slate-50/80 text-[var(--muted)] group-hover:border-slate-300/80 group-hover:bg-slate-200/85 group-hover:text-[var(--text)]'
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                <span className="whitespace-nowrap">{item.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="mt-3 border-t border-[var(--border)] pt-3">
+            <Button type="button" variant="primary" onClick={volverLista} className="w-full text-xs">
+              Volver
+            </Button>
+          </div>
+          </div>
+        </aside>
+
+        <div className="min-w-0 space-y-4 lg:col-start-2 lg:row-start-2">
           {mensaje ? (
-            <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{mensaje}</div>
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{mensaje}</div>
           ) : null}
-          {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div> : null}
+          {error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div> : null}
       {tab === 'resumen' ? (
-        <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-md sm:p-5">
+        <Card className={tabCardClass}>
+          <div className="mb-4">
+            <p className={tabHeaderTitleClass}>Resumen del miembro</p>
+          </div>
           <div className="overflow-hidden rounded-xl border border-[var(--border)]">
             <div className="flex flex-col divide-y divide-[var(--border)] bg-[var(--panel-2)]/50 lg:flex-row lg:divide-x lg:divide-y-0">
               <div className="min-w-0 flex-[1.25] p-3.5 lg:py-3">
@@ -894,7 +918,10 @@ export default function AdminMiembroPanelPage() {
                   {resumenTablaCampos.map((row, index) => (
                     <tr
                       key={row.campo}
-                      className={`border-b border-gray-200 transition-colors hover:bg-yellow-50 ${index % 2 !== 0 ? 'bg-gray-100' : ''}`}
+                      className={cn(
+                        'border-b border-[var(--border)] transition-colors hover:bg-amber-50/50',
+                        index % 2 !== 0 ? 'bg-slate-50/90' : 'bg-white',
+                      )}
                     >
                       <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-[var(--text)]">
                         {row.campo}
@@ -927,19 +954,14 @@ export default function AdminMiembroPanelPage() {
 
       {tab === 'perfil' ? (
       <form onSubmit={guardarPerfil}>
-        <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-md">
+        <Card className={tabCardClass}>
           <div className="mb-4 flex flex-col gap-2 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <UserCircle2 className="h-6 w-6 shrink-0 text-[var(--accent)]" />
-              <h2 className="text-lg font-semibold tracking-tight text-[var(--text)]">Perfil y datos anexos</h2>
-            </div>
+            <p className={tabHeaderTitleClass}>Perfil y datos anexos</p>
             {cargandoDetalle ? <span className="text-xs font-medium text-amber-700">Sincronizando con el servidor…</span> : null}
           </div>
-          {errorPerfil ? (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-800">{errorPerfil}</div>
-          ) : null}
+          {errorPerfil ? <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{errorPerfil}</div> : null}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel-2)]/40 p-4">
+            <div className={tabInnerBlockClass}>
               <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Identidad legal</p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
@@ -1019,7 +1041,7 @@ export default function AdminMiembroPanelPage() {
               </div>
             </div>
             {(formEditar.rol === 'estudiante' || formEditar.rol === 'docente') ? (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel-2)]/40 p-4">
+              <div className={tabInnerBlockClass}>
                 <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Contacto</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block">
@@ -1047,11 +1069,9 @@ export default function AdminMiembroPanelPage() {
               </div>
             ) : null}
             {formEditar.rol === 'estudiante' ? (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel-2)]/40 p-4 lg:col-span-2">
+              <div className={cn(tabInnerBlockClass, 'lg:col-span-2')}>
                 <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Datos de estudiante</p>
-                {colombiaGeoError ? (
-                  <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">{colombiaGeoError}</p>
-                ) : null}
+                {colombiaGeoError ? <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">{colombiaGeoError}</p> : null}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block sm:col-span-2">
                     <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Dirección</span>
@@ -1147,7 +1167,7 @@ export default function AdminMiembroPanelPage() {
               </div>
             ) : null}
             {formEditar.rol === 'docente' ? (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--panel-2)]/40 p-4">
+              <div className={tabInnerBlockClass}>
                 <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Docente</p>
                 <label className="block">
                   <span className={profileLabelClass}>Especialidad</span>
@@ -1160,7 +1180,7 @@ export default function AdminMiembroPanelPage() {
                 </label>
               </div>
             ) : null}
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--panel-2)]/30 px-4 py-3 text-sm font-medium text-[var(--text)] lg:col-span-2">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 px-4 py-3 text-sm font-medium text-[var(--text)] lg:col-span-2">
               <input
                 type="checkbox"
                 checked={formEditar.activo}
@@ -1179,17 +1199,16 @@ export default function AdminMiembroPanelPage() {
       ) : null}
 
       {tab === 'cursos' && (u.rol === 'docente' || u.rol === 'estudiante') ? (
-        <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-md">
+        <Card className={tabCardClass}>
           <div className="mb-4 flex items-center gap-2 border-b border-[var(--border)] pb-3">
-            <BookOpen className="h-5 w-5 text-[var(--accent)]" />
-            <h2 className="text-lg font-semibold text-[var(--text)]">
+            <h2 className={tabHeaderTitleClass}>
               {u.rol === 'docente' ? 'Cursos como docente' : 'Inscripción a cursos'}
             </h2>
           </div>
           <p className="text-sm text-[var(--muted)]">
             Selecciona uno o varios cursos (con docente asignado) y aplica. Puedes volver a esta pestaña para sumar más.
           </p>
-          <div className="mt-4 max-h-56 overflow-auto rounded-xl border border-[var(--border)] bg-[var(--panel-2)]/50 p-3">
+          <div className="mt-4 max-h-56 overflow-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 p-4">
             {cursosAsignables.length === 0 ? (
               <p className="text-xs text-[var(--muted)]">No hay cursos activos con docente asignado.</p>
             ) : (
@@ -1220,11 +1239,13 @@ export default function AdminMiembroPanelPage() {
       ) : null}
 
       {tab === 'seguridad' ? (
-        <div className="space-y-5">
-          <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-md">
+        <Card className={tabCardClass}>
+          <div className="mb-4">
+            <h2 className={tabHeaderTitleClass}>Seguridad</h2>
+          </div>
+          <div className={tabInnerBlockClass}>
             <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-[var(--border)] pb-3">
-              <Mail className="h-5 w-5 text-[var(--accent)]" />
-              <h2 className="text-lg font-semibold text-[var(--text)]">Si olvidó la contraseña o no tiene el correo de acceso</h2>
+              <h3 className={tabHeaderTitleClass}>Si olvidó la contraseña o no tiene el correo de acceso</h3>
             </div>
             <p className="text-sm leading-relaxed text-[var(--muted)]">
               Reenvía el correo de bienvenida a <span className="font-medium text-[var(--text)]">{u.email}</span>. Allí suele venir el enlace o las
@@ -1235,12 +1256,10 @@ export default function AdminMiembroPanelPage() {
                 {reenviando ? 'Enviando…' : 'Reenviar correo de bienvenida'}
               </Button>
             </div>
-          </Card>
-
-          <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-md">
+          </div>
+          <div className={cn(tabInnerBlockClass, 'mt-4')}>
             <div className="mb-3 flex items-center gap-2 border-b border-[var(--border)] pb-3">
-              <Lock className="h-5 w-5 text-[var(--accent)]" />
-              <h2 className="text-lg font-semibold text-[var(--text)]">Nueva contraseña temporal (administración)</h2>
+              <h3 className={tabHeaderTitleClass}>Nueva contraseña temporal (administración)</h3>
             </div>
             <p className="text-sm leading-relaxed text-[var(--muted)]">
               Genera una clave provisional. Puedes copiarla y pasársela por otro canal, o marcar la opción para intentar enviarla por correo si el
@@ -1270,15 +1289,13 @@ export default function AdminMiembroPanelPage() {
                 {reseteando ? 'Generando…' : 'Generar contraseña temporal'}
               </Button>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       ) : null}
 
       {tab === 'staff' && u.rol === 'staff' && viewerRol === 'admin' ? (
-        <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-md">
-          <h2 className="flex items-center gap-2 border-b border-[var(--border)] pb-3 text-lg font-semibold text-[var(--text)]">
-            <Shield className="h-5 w-5 text-[var(--accent)]" /> Permisos staff
-          </h2>
+        <Card className={tabCardClass}>
+          <h2 className={cn(tabHeaderTitleClass, 'border-b border-[var(--border)] pb-3')}>Permisos staff</h2>
           <div className="mt-3 grid max-w-xl grid-cols-1 gap-3">
             <label className="block">
               <span className="mb-0.5 block text-[11px] font-semibold uppercase text-[var(--muted)]">Nivel de confianza</span>
@@ -1326,10 +1343,9 @@ export default function AdminMiembroPanelPage() {
       ) : null}
 
       {tab === 'actividad' ? (
-        <Card className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-md">
+        <Card className={tabCardClass}>
           <div className="mb-4 flex items-center gap-2 border-b border-[var(--border)] pb-3">
-            <Activity className="h-5 w-5 text-[var(--accent)]" />
-            <h2 className="text-lg font-semibold text-[var(--text)]">Actividad reciente</h2>
+            <h2 className={tabHeaderTitleClass}>Actividad reciente</h2>
           </div>
           <div className="max-h-[28rem] space-y-3 overflow-auto pr-1">
             {cargandoActividad ? (
@@ -1338,7 +1354,7 @@ export default function AdminMiembroPanelPage() {
               <p className="text-sm text-[var(--muted)]">Sin actividad registrada.</p>
             ) : (
               actividad.map((a) => (
-                <div key={a.id} className="flex gap-3 rounded-xl border border-[var(--border)] bg-[var(--panel-2)]/50 p-4 shadow-sm">
+                <div key={a.id} className="flex gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 p-4">
                   <div className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 ring-2 ring-amber-200/50" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-[var(--text)]">{a.accion}</p>

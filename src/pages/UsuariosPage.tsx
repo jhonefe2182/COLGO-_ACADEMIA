@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '../components/common/Button'
 import { Modal } from '../components/common/Modal'
 import { Card } from '../components/common/Card'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 import { DataTable, type Column } from '../components/common/Table'
 import {
   createUsuarioAdmin,
@@ -315,7 +317,7 @@ export default function UsuariosPage() {
   })
 
   return (
-    <div className="flex flex-col gap-4 bg-gradient-to-b from-amber-50/30 via-transparent to-transparent p-4 lg:p-6">
+    <div className="flex flex-col gap-5">
       {mensajeExito ? (
         <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           {mensajeExito}
@@ -335,7 +337,12 @@ export default function UsuariosPage() {
         </div>
       ) : null}
 
-      <Card className="border border-[var(--border)] bg-gradient-to-b from-[var(--surface)] to-[var(--panel-2)] shadow-sm">
+      <Card
+        className={cn(
+          backofficePanelCardClass,
+          'bg-gradient-to-b from-[var(--surface)] to-[var(--panel-2)] p-4 sm:p-5',
+        )}
+      >
         <div className="mb-4 flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -421,7 +428,7 @@ export default function UsuariosPage() {
       </Card>
 
       {!esModuloRol ? (
-        <Card className="border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+        <Card className={backofficePanelCardClass}>
           <div className="mb-3">
             <p className="text-sm font-semibold text-[var(--text)]">Alertas de seguridad</p>
             <p className="mt-1 text-xs text-[var(--muted)]">Usuarios con 3+ intentos fallidos en las últimas 24h.</p>
@@ -441,7 +448,7 @@ export default function UsuariosPage() {
       ) : null}
 
       {!esModuloRol ? (
-        <Card className="border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+        <Card className={backofficePanelCardClass}>
           <div className="mb-3">
             <p className="text-sm font-semibold text-[var(--text)]">Logs del sistema</p>
             <p className="mt-1 text-xs text-[var(--muted)]">Logs recientes del sistema (auditoría).</p>

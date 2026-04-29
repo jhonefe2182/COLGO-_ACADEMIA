@@ -6,6 +6,8 @@ import { DataTable, type Column } from '../components/common/Table'
 import { Modal } from '../components/common/Modal'
 import { type Enrollment, type EnrollmentStatus, formatDate } from '../services/mockData'
 import { Eye, Search } from 'lucide-react'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 import { useColgo } from '../state/useColgo'
 // import { v4 as uuidv4 } from 'uuid'
 import { uuidv4 } from '../utils/uuid'
@@ -86,16 +88,16 @@ export function MatriculasPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-        <div className="flex flex-col gap-4">
-          <Card>
+        <div className="flex flex-col gap-5">
+          <Card className={cn(backofficePanelCardClass, 'p-4 sm:p-5')}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-[var(--text)]">Matrículas</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">Gestión de estados: activa, pendiente y cancelada (mock).</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -122,7 +124,9 @@ export function MatriculasPage() {
                 >
                   Exportar
                 </Button>
-                <Button variant="primary" onClick={() => setShowCreateModal(true)}>Crear matrícula</Button>
+                <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+                  Crear matrícula
+                </Button>
               </div>
             </div>
 
@@ -163,7 +167,7 @@ export function MatriculasPage() {
             </div>
           </Card>
 
-          <Card>
+          <Card className={cn(backofficePanelCardClass, 'p-4 sm:p-5')}>
             <DataTable
               columns={columns}
               rows={filtered}
@@ -173,7 +177,7 @@ export function MatriculasPage() {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <Card>
             <p className="text-sm font-semibold text-[var(--text)]">Estado</p>
             <p className="mt-1 text-xs text-[var(--muted)]">Distribución (mock).</p>
@@ -213,7 +217,7 @@ export function MatriculasPage() {
 
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Matrícula · ${selected.studentName}` : 'Matrícula'}>
         {selected ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold text-[var(--muted)]">Curso</p>
@@ -263,7 +267,7 @@ export function MatriculasPage() {
       {/* Modal crear matrícula */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear matrícula">
         <form
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-5"
           onSubmit={e => {
             e.preventDefault()
             setFormError('')

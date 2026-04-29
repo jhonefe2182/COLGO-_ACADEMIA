@@ -133,13 +133,13 @@ export async function getTeacherReporte(cursoId: number) {
   return apiCall(`/teacher/reportes/curso/${cursoId}`);
 }
 
-/** Perfil propio en servidor (rol `staff` o `admin`): `GET /api/usuarios/me/perfil` */
+/** Perfil propio en servidor (rol `staff` o `admin`): `GET /api/auth/me/perfil` */
 export async function getUsuariosMePerfil() {
-  return apiCall('/usuarios/me/perfil');
+  return apiCall('/auth/me/perfil');
 }
 
 export async function updateUsuariosMePerfil(data: Record<string, unknown>) {
-  return apiCall('/usuarios/me/perfil', {
+  return apiCall('/auth/me/perfil', {
     method: 'PUT',
     body: JSON.stringify(data),
   });

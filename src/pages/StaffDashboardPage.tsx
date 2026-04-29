@@ -4,6 +4,8 @@ import { Button } from '../components/common/Button'
 import { Card } from '../components/common/Card'
 import { Toast } from '../components/common/Toast'
 import { getUsuariosMePerfil, updateUsuariosMePerfil } from '../services/apiClient'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 
 export function StaffDashboardPage() {
   const location = useLocation()
@@ -82,8 +84,8 @@ export function StaffDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card className="flex items-center justify-between">
+    <div className="flex flex-col gap-5">
+      <Card className={cn(backofficePanelCardClass, 'flex items-center justify-between')}>
         <div>
           <p className="text-base font-semibold text-[var(--text)]">{saludo}</p>
           <p className="mt-1 text-sm text-[var(--muted)]">Panel operativo staff.</p>
@@ -93,7 +95,7 @@ export function StaffDashboardPage() {
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
 
       {seccion === 'dashboard' ? (
-        <Card>
+        <Card className={backofficePanelCardClass}>
           <p className="text-base font-semibold text-[var(--text)]">Accesos rápidos</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" variant="secondary" onClick={() => navigate('/staff/usuarios')}>
@@ -107,7 +109,7 @@ export function StaffDashboardPage() {
       ) : null}
 
       {seccion === 'perfil' ? (
-        <Card>
+        <Card className={backofficePanelCardClass}>
           <p className="text-base font-semibold text-[var(--text)]">Perfil y datos</p>
           <p className="mt-1 text-sm text-[var(--muted)]">Actualiza tus datos para visualizarlos en administración.</p>
           {profileError ? <p className="mt-3 text-sm text-red-700">{profileError}</p> : null}

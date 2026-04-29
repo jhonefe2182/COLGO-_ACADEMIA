@@ -35,9 +35,8 @@ export function DataTable<T extends object>({
               <th
                 key={col.header}
                 className={cn(
-                  'sticky top-0 z-0 bg-[var(--panel-2)]',
-                  'border-b border-[var(--border)]',
-                  'px-4 py-3 text-left text-xs font-semibold tracking-wide text-[var(--muted)] uppercase',
+                  'sticky top-0 z-0 border-b border-[var(--accent)] bg-[var(--panel-2)]',
+                  'px-4 py-3 pb-2.5 pt-0 text-left align-bottom text-xs font-semibold tracking-wide text-[var(--muted)] uppercase',
                   col.headerClassName,
                 )}
               >
@@ -59,11 +58,11 @@ export function DataTable<T extends object>({
                 key={getRowId(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
-                  'border-b border-gray-200 transition-colors',
-                  index % 2 !== 0 ? 'bg-gray-100' : '',
+                  'border-b border-[var(--border)] transition-colors',
+                  index % 2 !== 0 ? 'bg-slate-50/90' : 'bg-white',
                   onRowClick
                     ? 'cursor-pointer hover:bg-amber-50/90 active:bg-amber-100/80'
-                    : 'hover:bg-yellow-50',
+                    : 'hover:bg-amber-50/50',
                 )}
               >
                 {columns.map((col) => (

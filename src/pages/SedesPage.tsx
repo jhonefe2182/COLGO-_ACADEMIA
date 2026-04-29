@@ -6,6 +6,8 @@ import { LocationCard } from '../components/locations/LocationCard'
 import { Modal } from '../components/common/Modal'
 import { type Location } from '../services/mockData'
 import { Building2, MapPinned, Users } from 'lucide-react'
+import { backofficePanelCardClass } from '../components/layout/backofficeVisual'
+import { cn } from '../utils/cn'
 import { useColgo } from '../state/useColgo'
 import { uuidv4 } from '../utils/uuid'
 import { Toast } from '../components/common/Toast'
@@ -34,19 +36,21 @@ export function SedesPage() {
   }, [locations])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <Toast message="Descarga completada" show={showToast} onClose={() => setShowToast(false)} />
-      <Card>
+      <Card className={cn(backofficePanelCardClass, 'p-4 sm:p-5')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-[var(--text)]">Sedes</p>
             <p className="mt-1 text-xs text-[var(--muted)]">Cards para Medellín, Bogotá y Virtual (mock).</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="secondary" leftIcon={<MapPinned size={16} />} onClick={() => setShowMapModal(true)}>
               Ver mapa
             </Button>
-            <Button variant="primary" onClick={() => setShowCreateModal(true)}>Nueva sede</Button>
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+              Nueva sede
+            </Button>
             <Button
               variant="secondary"
               onClick={() => {
@@ -112,7 +116,7 @@ export function SedesPage() {
 
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Sede · ${selected.city}` : 'Sede'}>
         {selected ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Badge tone={selected.city === 'Virtual' ? 'neutral' : 'accent'}>{selected.city}</Badge>
@@ -157,7 +161,7 @@ export function SedesPage() {
       {/* Modal crear sede */}
       <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear sede">
         <form
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-5"
           onSubmit={e => {
             e.preventDefault()
             setFormError('')
@@ -242,7 +246,7 @@ export function SedesPage() {
 
       {/* Modal ver mapa */}
       <Modal open={showMapModal} onClose={() => setShowMapModal(false)} title="Mapa de sedes">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <p className="text-sm">(Mock) Aquí se mostraría el mapa de sedes.</p>
           <Button variant="primary" onClick={() => setShowMapModal(false)}>Cerrar</Button>
         </div>
