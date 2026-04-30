@@ -31,7 +31,11 @@ const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://lo
 
 /** Preview de Vercel: orígenes tipo https://proyecto-xxx-usuario.vercel.app (cambia en cada deploy). */
 function isVercelAppPreviewOrigin(origin) {
-  const on = ['1', 'true', 'yes'].includes(String(process.env.CORS_ALLOW_VERCEL || '').trim().toLowerCase());
+  const raw = process.env.CORS_ALLOW_VERCEL;
+  const on =
+    raw == null || String(raw).trim() === ''
+      ? true
+      : ['1', 'true', 'yes'].includes(String(raw).trim().toLowerCase());
   if (!on) return false;
   try {
     const host = new URL(origin).hostname;

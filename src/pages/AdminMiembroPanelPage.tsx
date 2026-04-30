@@ -724,7 +724,7 @@ export default function AdminMiembroPanelPage() {
   const tabHeaderTitleClass = 'text-base font-semibold tracking-tight text-[var(--text)]'
   const tabInnerBlockClass = cn(
     'rounded-xl border border-[var(--border)] bg-[var(--surface)]/70 p-4',
-    'ring-1 ring-inset ring-amber-300/22',
+    'ring-1 ring-inset ring-amber-300/34',
   )
 
   return (
@@ -993,7 +993,6 @@ export default function AdminMiembroPanelPage() {
           {errorPerfil ? <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{errorPerfil}</div> : null}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className={tabInnerBlockClass}>
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Identidad legal</p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className={profileLabelClass}>Nombre(s)</span>
@@ -1073,7 +1072,6 @@ export default function AdminMiembroPanelPage() {
             </div>
             {(formEditar.rol === 'estudiante' || formEditar.rol === 'docente') ? (
               <div className={tabInnerBlockClass}>
-                <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Contacto</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block">
                     <span className={profileLabelClass}>Correo electrónico</span>
@@ -1101,7 +1099,6 @@ export default function AdminMiembroPanelPage() {
             ) : null}
             {formEditar.rol === 'estudiante' ? (
               <div className={cn(tabInnerBlockClass, 'lg:col-span-2')}>
-                <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">Datos de estudiante</p>
                 {colombiaGeoError ? <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">{colombiaGeoError}</p> : null}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block sm:col-span-2">
