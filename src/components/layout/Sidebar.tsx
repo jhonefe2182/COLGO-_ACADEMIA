@@ -16,7 +16,8 @@ import type { ReactNode } from 'react'
 import { cn } from '../../utils/cn'
 import { clearSession, loadSessionUser, type UserRole } from '../../state/authSession'
 import { Button } from '../common/Button'
-import { ColgoBrandBlock, rolEtiqueta } from './ColgoBrandBlock'
+import { ColgoBrandBlock } from './ColgoBrandBlock'
+import { rolEtiqueta } from './rolEtiqueta'
 
 type NavItem = {
   to: string
@@ -31,6 +32,7 @@ function roleBasePath(rol: UserRole): string {
   return '/estudiante'
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- utilidad compartida (Header, etc.)
 export function getNavItems(rol?: UserRole): NavItem[] {
   if (!rol) return []
   const base = roleBasePath(rol)

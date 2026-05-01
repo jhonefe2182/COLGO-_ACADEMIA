@@ -1,4 +1,3 @@
-import type { UserRole } from '../../state/authSession'
 import { cn } from '../../utils/cn'
 import {
   backofficeBottomAccentClass,
@@ -7,15 +6,6 @@ import {
   backofficeDarkSurfaceGradient,
   backofficeDarkSurfaceInset,
 } from './backofficeVisual'
-
-/** Etiqueta del modo de interfaz (misma lógica en sidebar, ficha y cabeceras). */
-export function rolEtiqueta(rol?: UserRole): string {
-  if (rol === 'admin') return 'Administración'
-  if (rol === 'staff') return 'Staff'
-  if (rol === 'docente') return 'Docencia'
-  if (rol === 'estudiante') return 'Estudiante'
-  return 'Usuario'
-}
 
 type ColgoBrandBlockProps = {
   /** Texto del chip inferior (p. ej. rol de la sesión). */

@@ -1,9 +1,9 @@
 import { resolveApiBaseUrl } from '../config/apiBaseUrl';
 import { clearSession, getSessionToken } from '../state/authSession';
 
-/** Producción: `/_backend/api` en Vercel; override con `VITE_API_URL` si hace falta. */
-const API_BASE_URL = resolveApiBaseUrl();
-const REALTIME_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
+function realtimeBaseFromApi(apiBase: string): string {
+  return apiBase.replace(/\/api$/, '')
+}
 
 interface FetchOptions extends RequestInit {
   headers?: HeadersInit;
@@ -24,7 +24,8 @@ async function apiCall<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const base = resolveApiBaseUrl()
+  const response = await fetch(`${base}${endpoint}`, {
     ...options,
     headers,
   });
@@ -598,7 +599,7 @@ function ensureRealtimeConnection() {
   const token = getSessionToken();
   if (!token) return;
 
-  const url = `${REALTIME_BASE_URL}/api/realtime/stream?token=${encodeURIComponent(token)}`;
+  const url = `${realtimeBaseFromApi(resolveApiBaseUrl())}/api/realtime/stream?token=${encodeURIComponent(token)}`;
   realtimeES = new EventSource(url);
   bindEventType('connected');
   bindEventType('grade_updated');

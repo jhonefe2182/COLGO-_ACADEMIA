@@ -27,7 +27,10 @@ export function Modal({
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const drag = useRef<{ pointerId: number; sx: number; sy: number; ox: number; oy: number } | null>(null)
   const offsetRef = useRef(offset)
-  offsetRef.current = offset
+
+  useEffect(() => {
+    offsetRef.current = offset
+  }, [offset])
 
   useEffect(() => {
     if (!open) return
@@ -41,6 +44,7 @@ export function Modal({
   }, [open, onClose])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reinicio de posición al abrir el modal
     if (open) setOffset({ x: 0, y: 0 })
   }, [open])
 

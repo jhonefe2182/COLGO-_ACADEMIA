@@ -11,7 +11,8 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Activity, BookOpen, ExternalLink, LayoutDashboard, Lock, Mail, Shield, UserCircle2 } from 'lucide-react'
 import { Button } from '../components/common/Button'
 import { Card } from '../components/common/Card'
-import { ColgoBrandBlock, rolEtiqueta as etiquetaModoInterfaz } from '../components/layout/ColgoBrandBlock'
+import { ColgoBrandBlock } from '../components/layout/ColgoBrandBlock'
+import { rolEtiqueta as etiquetaModoInterfaz } from '../components/layout/rolEtiqueta'
 import {
   backofficeBottomAccentClass,
   backofficeDarkCardChrome,

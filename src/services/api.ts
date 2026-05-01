@@ -4,8 +4,6 @@
 
 import { resolveApiBaseUrl } from '../config/apiBaseUrl';
 
-const API_URL = resolveApiBaseUrl();
-
 export class ApiError extends Error {
   public status: number;
 
@@ -29,7 +27,7 @@ async function apiRequest<T>(
   options: FetchOptions = {},
 ): Promise<T> {
   const { requiresAuth = true, ...fetchOptions } = options;
-  const url = `${API_URL}${endpoint}`;
+  const url = `${resolveApiBaseUrl()}${endpoint}`;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
