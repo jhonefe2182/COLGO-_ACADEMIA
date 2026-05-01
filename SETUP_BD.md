@@ -130,7 +130,7 @@ export function StudentsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/students')
+    fetch('/api/api/students')
       .then(res => res.json())
       .then(data => {
         setStudents(data);

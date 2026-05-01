@@ -45,7 +45,7 @@ npm run server
 
 Ahora tienes:
 - 🎨 Frontend en http://localhost:5173
-- 🔌 Backend en http://localhost:3001
+- 🔌 Backend en /api
 
 ---
 
@@ -54,13 +54,13 @@ Ahora tienes:
 ### Backend está listo si ves:
 ```
 ✅ Conexión MySQL exitosa. Versión: ...
-✅ Servidor COLGO ejecutándose en http://localhost:3001
+✅ Servidor COLGO ejecutándose en /api
 ```
 
 ### Probar la API:
-- Health check: http://localhost:3001/api/health
-- DB test: http://localhost:3001/api/db-test
-- Obtener estudiantes: http://localhost:3001/api/students
+- Health check: /api/api/health
+- DB test: /api/api/db-test
+- Obtener estudiantes: /api/api/students
 
 ---
 

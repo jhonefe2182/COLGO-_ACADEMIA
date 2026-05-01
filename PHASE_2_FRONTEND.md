@@ -50,7 +50,7 @@
 #### apiClient.ts
 **Ubicación**: `src/services/apiClient.ts`
 **Características**:
-- Base URL: `http://localhost:3001/api`
+- Base URL: `/api/api`
 - Manejo automático de tokens JWT
 - Inyección de Authorization header en todos los requests
 - Manejo global de errores (401 redirige a login)

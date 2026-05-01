@@ -70,7 +70,7 @@ async function apiRequest<T>(
 
     if (message.includes('Failed to fetch') || message.includes('fetch')) {
       throw new ApiError(
-        'No se pudo conectar al servidor. Asegúrate de que npm run server está ejecutándose en http://localhost:3001',
+        'No se pudo conectar al servidor. Asegúrate de que npm run server está ejecutándose en /api',
         0,
       );
     }

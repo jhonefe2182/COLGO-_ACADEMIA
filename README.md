@@ -29,7 +29,7 @@ START_ALL.bat
 
 Esto abrirá 2 ventanas automáticamente:
 - Frontend: http://localhost:5173
-- Backend: http://localhost:3001
+- Backend: /api
 
 ### 2️⃣ O ejecutar manualmente
 

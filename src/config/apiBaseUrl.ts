@@ -27,7 +27,7 @@ export function resolveApiBaseUrl(): string {
     const isLocal = host === 'localhost' || host === '127.0.0.1'
     
     if (isLocal) {
-      return fromEnv !== '' ? fromEnv : 'http://localhost:3001/api'
+      return fromEnv !== '' ? fromEnv : '/api/api'
     }
   }
 

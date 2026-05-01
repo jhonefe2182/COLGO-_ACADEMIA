@@ -116,7 +116,7 @@ Acceder a: `http://localhost:5173`
 
 ```bash
 # 1. Login
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST /api/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@colgo.edu",
@@ -136,7 +136,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 }
 
 # 2. Usar token en otra llamada
-curl -X GET http://localhost:3001/api/admin/estadisticas \
+curl -X GET /api/api/admin/estadisticas \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 ```
 
@@ -147,7 +147,7 @@ curl -X GET http://localhost:3001/api/admin/estadisticas \
 ### Paso 1: Admin crea Estudiante
 
 ```bash
-curl -X POST http://localhost:3001/api/admin/estudiantes \
+curl -X POST /api/api/admin/estudiantes \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -170,7 +170,7 @@ curl -X POST http://localhost:3001/api/admin/estudiantes \
 ### Paso 2: Admin crea Curso
 
 ```bash
-curl -X POST http://localhost:3001/api/admin/cursos \
+curl -X POST /api/api/admin/cursos \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -186,7 +186,7 @@ curl -X POST http://localhost:3001/api/admin/cursos \
 ### Paso 3: Admin crea Matrícula
 
 ```bash
-curl -X POST http://localhost:3001/api/matriculas/crear \
+curl -X POST /api/api/matriculas/crear \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -225,7 +225,7 @@ JWT_SECRET=tu_clave_secreta_muy_segura_aqui_colgo_2026
 JWT_EXPIRES_IN=7d
 
 # Frontend
-VITE_API_URL=http://localhost:3001/api
+VITE_API_URL=/api/api
 
 # Email (para envío de credenciales)
 SMTP_HOST=smtp.gmail.com
@@ -291,20 +291,20 @@ src/
 
 ### 1. Health Check
 ```bash
-curl http://localhost:3001/api/health
+curl /api/api/health
 # {"status":"ok","message":"Backend COLGO funcionando"}
 ```
 
 ### 2. Estadísticas (requiere token)
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:3001/api/admin/estadisticas
+  /api/api/admin/estadisticas
 ```
 
 ### 3. Listar Estudiantes
 ```bash
 curl -H "Authorization: Bearer TOKEN" \
-  http://localhost:3001/api/admin/estudiantes
+  /api/api/admin/estudiantes
 ```
 
 ---

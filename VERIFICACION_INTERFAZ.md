@@ -23,8 +23,8 @@ npm run server
 ✅ Deberías ver:
 ```
 ✅ Servidor COLGO ejecutándose
-🔌 URL: http://localhost:3001
-📊 API: http://localhost:3001/api
+🔌 URL: /api
+📊 API: /api/api
 ```
 
 ### Opción B: Ejecutar ambos automáticamente (RECOMENDADO)
@@ -72,7 +72,7 @@ En la página de login, ingresa:
 
 **Error 1: Network error**
 ```
-GET http://localhost:3001/api/... FAILED
+GET /api/api/... FAILED
 ```
 - El backend no está accesible
 - Solución: Verifica que Express esté corriendo en puerto 3001
@@ -103,7 +103,7 @@ Abre la pestaña **Network** en F12 (Developer Tools) y:
 
 Ejemplo de solicitud correcta:
 ```
-GET http://localhost:3001/api/health → Status 200
+GET /api/api/health → Status 200
 Response: { "status": "OK", "timestamp": "2026-04-20T..." }
 ```
 
@@ -150,7 +150,7 @@ npx tsc --noEmit
   DB_HOST=localhost
   DB_USER=root
   CORS_ORIGIN=http://localhost:5173
-  VITE_API_URL=http://localhost:3001/api
+  VITE_API_URL=/api/api
   ```
 
 ---

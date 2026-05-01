@@ -34,7 +34,7 @@ echo.
 echo Servidores iniciados.
 echo.
 echo Frontend: http://localhost:5173
-echo Backend:  http://localhost:3001
+echo Backend:  /api
 echo.
 echo Se abrio Google Chrome en el frontend.
 echo Cierra ambas ventanas para detener los servidores.

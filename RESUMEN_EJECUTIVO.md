@@ -155,8 +155,8 @@ VITE v8.0.2 ready in 522 ms
 **Ventana Backend debe mostrar:**
 ```
 ✅ Servidor COLGO ejecutándose
-🔌 URL: http://localhost:3001
-📊 API: http://localhost:3001/api
+🔌 URL: /api
+📊 API: /api/api
 ```
 
 ### Verificación 2: Navegador funciona

@@ -108,7 +108,7 @@ npm run dev
 **Ventana 2 - Backend:**
 ```bash
 npm run server
-# Ejecuta en: http://localhost:3001
+# Ejecuta en: /api
 ```
 
 ### PROBLEMAS A REVISAR:

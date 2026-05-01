@@ -65,7 +65,7 @@ handleCreateStudent() es llamado
     ↓
 Valida datos (nombre y documento requeridos)
     ↓
-Envía POST a http://localhost:3001/api/students
+Envía POST a /api/api/students
     ↓
 Si éxito: Agrega estudiante al estado local
     ↓
@@ -85,7 +85,7 @@ npm run server
 
 Deberías ver:
 ```
-✅ Servidor COLGO ejecutándose en http://localhost:3001
+✅ Servidor COLGO ejecutándose en /api
 ```
 
 ### Paso 2: Inicia el Frontend
@@ -152,7 +152,7 @@ DB_NAME=colgo_db
 PORT=3001
 
 # Frontend
-VITE_API_URL=http://localhost:3001/api
+VITE_API_URL=/api/api
 ```
 
 ---
@@ -160,7 +160,7 @@ VITE_API_URL=http://localhost:3001/api
 ## 🐛 Troubleshooting
 
 ### Error: "Error al crear el estudiante"
-**Solución**: Verifica que el backend está corriendo en `http://localhost:3001`
+**Solución**: Verifica que el backend está corriendo en `/api`
 
 ### Error: "El nombre es requerido"
 **Solución**: Rellena todos los campos requeridos (marcan con *)
